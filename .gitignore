@@ -10,7 +10,10 @@ _ReSharper*
 *.user 
 *.csproj.user
 *.resharper.user
+<<<<<<< HEAD
 *.ReSharper.user
+=======
+>>>>>>> faaac3087befc60282ca99caa37dae64960a3c52
 *.resharper
 *.cache
 *~

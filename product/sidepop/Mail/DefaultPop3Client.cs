@@ -1,4 +1,4 @@
-using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
@@ -292,6 +292,7 @@ namespace sidepop.Mail
         /// </exception>
         public void Authenticate()
         {
+
             //Connect();
 
             //execute the user command.
@@ -473,6 +474,7 @@ namespace sidepop.Mail
             {
                return;
             }
+
             using (QuitCommand command = new QuitCommand(_clientStream))
             {
                 if (_client.Connected)
@@ -484,6 +486,7 @@ namespace sidepop.Mail
                 {
                     SetState(Pop3State.Update);
                 } // Messages could have been deleted, reflect the server state.
+
 
                 //Disconnect();
 
