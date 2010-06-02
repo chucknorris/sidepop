@@ -1,0 +1,145 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{BDCF1507-C999-4775-90C3-4D9CB4C9F951}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>sidepop</RootNamespace>
+    <AssemblyName>sidePOP</AssemblyName>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Castle.Core, Version=1.1.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\Castle\Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.DynamicProxy2, Version=2.1.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\Castle\Castle.DynamicProxy2.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.MicroKernel, Version=2.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\Castle\Castle.MicroKernel.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.Windsor, Version=2.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\Castle\Castle.Windsor.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\log4net\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\SolutionVersion.cs">
+      <Link>SolutionVersion.cs</Link>
+    </Compile>
+    <Compile Include="configuration\AccountConfigurationCollection.cs" />
+    <Compile Include="configuration\AccountConfigurationElement.cs" />
+    <Compile Include="configuration\SidePOPConfiguration.cs" />
+    <Compile Include="infrastructure\ApplicationParameters.cs" />
+    <Compile Include="infrastructure\containers\Container.cs" />
+    <Compile Include="infrastructure\containers\custom\WindsorContainer.cs" />
+    <Compile Include="infrastructure\containers\InversionContainer.cs" />
+    <Compile Include="infrastructure\extensions\Iteration.cs" />
+    <Compile Include="infrastructure\extensions\StringExtensions.cs" />
+    <Compile Include="infrastructure\extensions\TypeCasting.cs" />
+    <Compile Include="infrastructure\extensions\TypeExtensions.cs" />
+    <Compile Include="infrastructure\filesystem\FileSystemAccess.cs" />
+    <Compile Include="infrastructure\filesystem\WindowsFileSystemAccess.cs" />
+    <Compile Include="infrastructure\logging\custom\Log4NetLogFactory.cs" />
+    <Compile Include="infrastructure\logging\custom\Log4NetLogger.cs" />
+    <Compile Include="infrastructure\logging\custom\MultipleLogger.cs" />
+    <Compile Include="infrastructure\logging\custom\MultipleLoggerLogFactory.cs" />
+    <Compile Include="infrastructure\logging\Log.cs" />
+    <Compile Include="infrastructure\logging\LogFactory.cs" />
+    <Compile Include="infrastructure\logging\Logger.cs" />
+    <Compile Include="infrastructure\timers\DefaultTimer.cs" />
+    <Compile Include="infrastructure\timers\ITimer.cs" />
+    <Compile Include="infrastructure\timers\TimerElaspedEventHandler.cs" />
+    <Compile Include="Mail\Commands\Command.cs" />
+    <Compile Include="Mail\Commands\ConnectCommand.cs" />
+    <Compile Include="Mail\Pop3Client.cs" />
+    <Compile Include="Mail\Responses\ConnectResponse.cs" />
+    <Compile Include="Mail\Commands\DeleteCommand.cs" />
+    <Compile Include="Mail\Commands\ListCommand.cs" />
+    <Compile Include="Mail\Responses\ListResponse.cs" />
+    <Compile Include="Mail\MailHeaders.cs" />
+    <Compile Include="Mail\SidePOPMailMessage.cs" />
+    <Compile Include="Mail\Commands\NoOperationCommand.cs" />
+    <Compile Include="Mail\Commands\PassCommand.cs" />
+    <Compile Include="Mail\DefaultPop3Client.cs" />
+    <Compile Include="Mail\Commands\Pop3Command.cs" />
+    <Compile Include="Mail\Commands\Pop3Commands.cs" />
+    <Compile Include="Mail\Pop3Exception.cs" />
+    <Compile Include="Mail\Responses\Response.cs" />
+    <Compile Include="Mail\Results\Pop3ListItemResult.cs" />
+    <Compile Include="Mail\Responses\Pop3Response.cs" />
+    <Compile Include="Mail\Responses\Pop3Responses.cs" />
+    <Compile Include="Mail\Pop3State.cs" />
+    <Compile Include="Mail\Commands\QuitCommand.cs" />
+    <Compile Include="Mail\Commands\RetrieveCommand.cs" />
+    <Compile Include="Mail\Responses\RetrieveResponse.cs" />
+    <Compile Include="Mail\Commands\ResetCommand.cs" />
+    <Compile Include="Mail\Results\Result.cs" />
+    <Compile Include="Mail\Results\StatisticsResult.cs" />
+    <Compile Include="Mail\Commands\StatisticsCommand.cs" />
+    <Compile Include="Mail\Responses\StatResponse.cs" />
+    <Compile Include="Mail\Commands\TopCommand.cs" />
+    <Compile Include="Mail\Commands\UserCommand.cs" />
+    <Compile Include="message.events\MessageListEventArgs.cs" />
+    <Compile Include="message.events\MessagesReceivedEvent.cs" />
+    <Compile Include="Mime\MediaTypes.cs" />
+    <Compile Include="Mime\MimeEntity.cs" />
+    <Compile Include="Mime\MimeHeaders.cs" />
+    <Compile Include="Mime\MimeReader.cs" />
+    <Compile Include="Mime\QuotedPrintableEncoding.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="message.events\MessageEventArgs.cs" />
+    <Compile Include="message.events\MessageReceivedEvent.cs" />
+    <Compile Include="runners\EmailWatcher.cs" />
+    <Compile Include="runners\EmailWatcherConfigurator.cs" />
+    <Compile Include="runners\SidePopEmailWatcher.cs" />
+    <Compile Include="runners\SidePopXmlConfigurator.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
