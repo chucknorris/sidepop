@@ -47,7 +47,7 @@
 
   <target name ="copy_notices">
     <echo message="Packaging readme file to ${dirs.drop}."/>
-    <copy file="${dirs.current}\..\README" tofile="${dirs.drop}\ReadMe.txt" />
+    <copy file="${dirs.current}\..\README.markdown" tofile="${dirs.drop}\ReadMe.txt" />
     
     <echo message="Packaging other legal stuff to ${dirs.drop}\LEGAL."/>
     <copy todir="${dirs.drop}\LEGAL">
