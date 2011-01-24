@@ -21,9 +21,9 @@
     <echo message="Cleaning up ${dirs.drop}\${folder.app.drop} to remove unused items." />
     <delete> 
       <fileset basedir="${dirs.drop}\${folder.app.drop}">
-        <include name="_BuildInfo.xml" />
-        <include name="developwithpassion.commons.core.infrastructure*" />
-        <include name="*.pdb" />
+        <include name="**/_BuildInfo.xml" />
+        <include name="**/developwithpassion.commons.core.infrastructure*" />
+        <include name="**/*.pdb" />
       </fileset>
     </delete>
   </target>
@@ -38,9 +38,9 @@
     
     <delete>
       <fileset basedir="${dirs.drop}\${folder.app.drop}">
-        <exclude name="sidePOP.dll" />
-        <exclude name="log4net.dll" />
-        <include name="*.*" />
+        <exclude name="**/sidePOP.dll" />
+        <exclude name="**/log4net.dll" />
+        <include name="**/*.*" />
       </fileset>
     </delete>
   </target>
