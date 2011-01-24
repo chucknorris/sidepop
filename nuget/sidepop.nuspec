@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <metadata>
+    <id>sidepop</id>
+    <version>DO_NOT_EDIT</version>
+    <authors>Rob Reynolds, Tim Hibbard</authors>
+    <owners>Rob Reynolds</owners>
+    <summary>SidePOP gives your app the ability to receive email</summary>
+    <description>SidePOP allows your application the ability to receive email</description>
+    <projectUrl>http://sidepop.googlecode.com</projectUrl>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>email</tags>
+    <!--<iconUrl>32x32.png</iconUrl>-->
+    <dependencies>
+      <dependency id="log4net" version="1.2.10" />
+    </dependencies>
+  </metadata>
+</package>

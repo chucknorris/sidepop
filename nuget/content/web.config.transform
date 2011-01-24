@@ -1,0 +1,20 @@
+<configuration>
+  <configSections>
+    <section name="sidepop" type="sidepop.configuration.SidePOPConfiguration, sidepop"/>
+  </configSections>
+  
+  <sidepop>
+    <!-- 110 is normal POP3 SSL uses port 995-->
+    <accounts>
+      <add name="Emailer"
+           description=""
+           enabled="false"
+           hostName="mail.somewhere.net"
+           hostPort="110"
+           useSSL="false"
+           userName="USERNAME"
+           password="PASSWORD"
+           minutesBetweenChecks="1"  />
+    </accounts>
+  </sidepop>
+</configuration>
