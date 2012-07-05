@@ -4,6 +4,7 @@ using System.Net.Mail;
 using System.Net.Mime;
 using System.Text.RegularExpressions;
 using sidepop.Mime;
+using System.Text;
 
 namespace sidepop.Mail
 {
@@ -26,6 +27,11 @@ namespace sidepop.Mail
         }
 
         public long Octets { get; set; }
+
+        /// <summary>
+        /// Exposes the raw lines for this mail message
+        /// </summary>
+        public string[] RawLines { get; set; }
 
         /// <summary>
         /// Gets or sets the message number of the MailMessage on the POP3 server.
@@ -192,6 +198,8 @@ namespace sidepop.Mail
         public static SidePOPMailMessage CreateMailMessageFromEntity(MimeEntity entity)
         {
             SidePOPMailMessage message = new SidePOPMailMessage();
+            message.RawLines = entity.RawLines;
+
             string value;
             foreach (string key in entity.Headers.AllKeys)
             {
@@ -281,5 +289,20 @@ namespace sidepop.Mail
                 yield return CreateMailAddress(address);
             }*/
         }
-    }
+
+        /// <summary>
+        /// Returns the raw message as read from the pop3 server
+        /// </summary>
+        public string GetRawMessage()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var line in RawLines)
+            {
+                sb.AppendLine(line);
+            }
+
+            return sb.ToString();
+        }
+	}
 }

@@ -48,7 +48,8 @@ namespace sidepop.Mime
 
             _lines = lines;
             _entity = new MimeEntity(entity);
-        }
+            _entity.RawLines = lines.ToArray();
+		}
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MimeReader"/> class.
@@ -63,7 +64,8 @@ namespace sidepop.Mime
             }
 
             _lines = new Queue<string>(lines);
-        }
+            _entity.RawLines = lines;
+		}
 
         /// <summary>
         /// Gets the lines.
