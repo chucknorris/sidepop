@@ -35,11 +35,20 @@ namespace sidepop.Mime
 
 						if (line.EndsWith(Equal))
 						{
+							//Don't include the Equal character itself because it is not part of the line content
+							line = line.Substring(0, line.Length - 1);
+
 							writer.Write(DecodeLine(line));
 						} //handle soft line breaks for lines that end with an "="
 						else
 						{
-							writer.WriteLine(DecodeLine(line));
+							writer.Write(DecodeLine(line));
+
+							//Avoid extra line break on last line of the message
+							if (reader.Peek() != -1)
+							{
+								writer.WriteLine();
+							}
 						}
 					}
 				}
