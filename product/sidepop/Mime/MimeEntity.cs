@@ -406,6 +406,17 @@ namespace sidepop.Mime
 				attachment.ContentDisposition.Parameters.Clear();
 				foreach (string key in entity.ContentDisposition.Parameters.Keys)
 				{
+                    //Skip values that will be strongly typed copied after this loop: it happens that date string
+                    //will not be parsed correctly when going through Parameters.Add but are already parsed into entity.ContentDisposition
+                    if (key == "creation-date" ||
+                        key == "modification-date" ||
+                        key == "read-date" ||
+                        key == "size" ||
+                        key == "filename")
+                    {
+                        continue;
+                    }
+
 					attachment.ContentDisposition.Parameters.Add(key, entity.ContentDisposition.Parameters[key]);
 				}
 
