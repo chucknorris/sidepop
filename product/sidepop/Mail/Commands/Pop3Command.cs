@@ -299,7 +299,7 @@ namespace sidepop.Mail.Commands
         protected string[] GetResponseLines(MemoryStream stream)
         {
             List<string> lines = new List<string>();
-            using (StreamReader reader = new StreamReader(stream, Encoding.Default, false))
+            using (StreamReader reader = new StreamReader(stream, Encoding.GetEncoding("iso-8859-1"), false))
             {
                 try
                 {
