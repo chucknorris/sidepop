@@ -422,7 +422,9 @@ namespace sidepop.Mail
             }
 
             MimeReader reader = new MimeReader(response.MessageLines);
-            return reader.CreateMimeEntity();
+            MimeEntity entity = reader.CreateMimeEntity();
+            entity.RawBytes = response.RawBytes;
+            return entity;
         }
 
         public SidePOPMailMessage Top(int messageId, int lineCount)
@@ -445,6 +447,7 @@ namespace sidepop.Mail
 
             MimeReader reader = new MimeReader(response.MessageLines);
             MimeEntity entity = reader.CreateMimeEntity();
+            entity.RawBytes = response.RawBytes;
             SidePOPMailMessage message = entity.ToMailMessageEx();
             message.Octets = response.Octets;
             message.MessageNumber = messageId;
