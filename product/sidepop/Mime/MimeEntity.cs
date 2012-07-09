@@ -18,9 +18,9 @@ namespace sidepop.Mime
 	    private readonly string _startBoundary;
 
         /// <summary>
-        /// Exposes raw lines for the mime part and its children
+        /// Exposes raw bytes for the mime part and its children
         /// </summary>
-        public string[] RawLines { get; set; }
+        public byte[] RawBytes { get; set; }
 
 	    /// <summary>
 		/// Initializes a new instance of the <see cref="MimeEntity"/> class.

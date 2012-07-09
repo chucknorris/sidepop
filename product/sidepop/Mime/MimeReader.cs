@@ -48,7 +48,6 @@ namespace sidepop.Mime
 
             _lines = lines;
             _entity = new MimeEntity(entity);
-            _entity.RawLines = lines.ToArray();
 		}
 
         /// <summary>
@@ -64,7 +63,6 @@ namespace sidepop.Mime
             }
 
             _lines = new Queue<string>(lines);
-            _entity.RawLines = lines;
 		}
 
         /// <summary>

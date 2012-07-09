@@ -50,10 +50,11 @@ namespace sidepop.Mail.Commands
 		protected override RetrieveResponse CreateResponse(byte[] buffer)
 		{
 			Pop3Response response = Pop3Response.CreateResponse(buffer);
+			
+			MemoryStream responseStream = StripPop3HostMessage(buffer, response.HostMessage);
+			string[] messageLines = GetResponseLines(responseStream);
 
-			string[] messageLines = GetResponseLines(StripPop3HostMessage(buffer, response.HostMessage));
-
-			return new RetrieveResponse(response, messageLines);
+			return new RetrieveResponse(response, messageLines, responseStream.ToArray());
 		}
 	}
 }
