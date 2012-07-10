@@ -14,7 +14,8 @@ namespace sidepop.Mime
 	/// </summary>
 	public class MimeEntity
 	{
-	    private readonly StringBuilder _encodedMessage;
+        private readonly StringBuilder _encodedMessage;
+        private readonly StringBuilder _decodedMessage;
 	    private readonly string _startBoundary;
 
         /// <summary>
@@ -32,6 +33,7 @@ namespace sidepop.Mime
 			ContentType = MimeReader.GetContentType(string.Empty);
 			Parent = null;
 			_encodedMessage = new StringBuilder();
+            _decodedMessage = new StringBuilder();
 		}
 
 		/// <summary>
@@ -56,7 +58,17 @@ namespace sidepop.Mime
 		public StringBuilder EncodedMessage
 		{
 			get { return _encodedMessage; }
-		}
+        }
+
+        /// <summary>
+        /// Gets the decoded message.
+        /// </summary>
+        /// <value>The decoded message.</value>
+        public StringBuilder DecodedMessage
+        {
+            get { return _decodedMessage; }
+        }
+
 
 	    /// <summary>
 	    /// Gets the children.

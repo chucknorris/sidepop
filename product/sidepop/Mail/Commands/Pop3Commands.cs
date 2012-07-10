@@ -6,6 +6,16 @@ namespace sidepop.Mail.Commands
 	/// </summary>
 	internal static class Pop3Commands
 	{
+        /// <summary>
+        /// Carriage return in hexadecimal
+        /// </summary>
+        public const byte Cr = 0xD;
+
+        /// <summary>
+        /// Line feed in hexadecimal
+        /// </summary>
+        public const byte Lf = 0xA;
+
 		/// <summary>
 		/// The CRLF escape sequence.
 		/// </summary>

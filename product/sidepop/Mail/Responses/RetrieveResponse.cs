@@ -13,12 +13,12 @@ namespace sidepop.Mail.Responses
 		/// </summary>
 		/// <param name="response">The response.</param>
 		/// <param name="messageLines">The message lines.</param>
-		public RetrieveResponse(Pop3Response response, string[] messageLines, byte[] rawBytes)
+		public RetrieveResponse(Pop3Response response, byte[] rawBytes)
 			: base(response.ResponseContents, response.HostMessage, response.StatusIndicator)
 		{
-			if (messageLines == null)
+			if (rawBytes == null)
 			{
-				throw new ArgumentNullException("messageLines");
+				throw new ArgumentNullException("rawBytes");
 			}
 			string[] values = response.HostMessage.Split(' ');
 			if (values.Length == 2)
@@ -26,15 +26,8 @@ namespace sidepop.Mail.Responses
 				Octets = Convert.ToInt64(values[1]);
 			}
 
-			MessageLines = messageLines;
 			RawBytes = rawBytes;
 		}
-
-	    /// <summary>
-	    /// Gets the message lines.
-	    /// </summary>
-	    /// <value>The Pop3 message lines.</value>
-	    public string[] MessageLines { get; private set; }
 
 	    /// <summary>
 	    /// Gets the raw bytes for the RETR command.

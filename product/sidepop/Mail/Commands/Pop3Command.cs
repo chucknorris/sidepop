@@ -292,6 +292,20 @@ namespace sidepop.Mail.Commands
         }
 
         /// <summary>
+        /// Strips the POP3 host message.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="header">The header.</param>
+        /// <returns>A <c>MemoryStream</c> without the Pop3 server message.</returns>
+        protected MemoryStream StripPop3HostMessage(byte[] bytes, string header, string footer)
+        {
+            int startPosition = header.Length + 2;
+            int length = bytes.Length - footer.Length - 2 - startPosition;
+            MemoryStream stream = new MemoryStream(bytes, startPosition, length);
+            return stream;
+        }
+
+        /// <summary>
         /// Gets the response lines.
         /// </summary>
         /// <param name="stream">The stream.</param>

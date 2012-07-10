@@ -421,7 +421,7 @@ namespace sidepop.Mail
                 response = ExecuteCommand<RetrieveResponse, RetrieveCommand>(command);
             }
 
-            MimeReader reader = new MimeReader(response.MessageLines);
+            MimeReader reader = new MimeReader(response.RawBytes);
             MimeEntity entity = reader.CreateMimeEntity();
             entity.RawBytes = response.RawBytes;
             return entity;
@@ -445,7 +445,7 @@ namespace sidepop.Mail
                 response = ExecuteCommand<RetrieveResponse, TopCommand>(command);
             }
 
-            MimeReader reader = new MimeReader(response.MessageLines);
+            MimeReader reader = new MimeReader(response.RawBytes);
             MimeEntity entity = reader.CreateMimeEntity();
             entity.RawBytes = response.RawBytes;
             SidePOPMailMessage message = entity.ToMailMessageEx();

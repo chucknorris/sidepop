@@ -8,6 +8,7 @@ namespace sidepop.Mime
     using infrastructure;
     using infrastructure.logging;
     using Mail.Commands;
+    using System.Text;
 
     /// <summary>
     /// This class is responsible for parsing a string array of lines
@@ -16,9 +17,17 @@ namespace sidepop.Mime
     public class MimeReader
     {
         private static readonly char[] HeaderWhitespaceChars = new[] { ' ', '\t' };
-
+        private static Encoding DefaultEncoding;
         private readonly MimeEntity _entity;
-        private readonly Queue<string> _lines;
+        private readonly Queue<byte[]> _lines;
+
+        /// <summary>
+        /// Static Ctor
+        /// </summary>
+        static MimeReader()
+        {
+            DefaultEncoding = Encoding.ASCII;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MimeReader"/> class.
@@ -33,7 +42,7 @@ namespace sidepop.Mime
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <param name="lines">The lines.</param>
-        private MimeReader(MimeEntity entity, Queue<string> lines)
+        private MimeReader(MimeEntity entity, Queue<byte[]> lines)
             : this()
         {
             if (entity == null)
@@ -54,22 +63,67 @@ namespace sidepop.Mime
         /// Initializes a new instance of the <see cref="MimeReader"/> class.
         /// </summary>
         /// <param name="lines">The lines.</param>
-        public MimeReader(string[] lines)
+        public MimeReader(byte[] rawBytes)
             : this()
         {
-            if (lines == null)
+            if (rawBytes == null)
             {
-                throw new ArgumentNullException("lines");
+                throw new ArgumentNullException("rawBytes");
             }
 
-            _lines = new Queue<string>(lines);
+            _lines = new Queue<byte[]>(SplitByteArrayWithCrLf(rawBytes));
 		}
 
+        /// <summary>
+        /// Splits a byte array using CrLf as the line delimiter.
+        /// </summary>
+        public static byte[][] SplitByteArrayWithCrLf(byte[] byteArray)
+        {
+            List<byte[]> lines = new List<byte[]>();
+
+            if (byteArray == null)
+            {
+                throw new ArgumentException("Value cannot be null", "byteArray");
+            }
+            
+            if( byteArray.Length == 0)
+            {
+                return lines.ToArray();
+            }
+
+            int startIndex = 0;
+            for (int i = 0; i < byteArray.Length - 1; i++)
+            {
+                byte byte1 = byteArray[i];
+                byte byte2 = byteArray[i + 1];
+
+                if (byte1 == Pop3Commands.Cr && byte2 == Pop3Commands.Lf)
+                {
+                    byte[] line = new byte[i - startIndex];
+                    Array.Copy(byteArray, startIndex, line, 0, i - startIndex);
+                    lines.Add(line);
+
+                    startIndex = i + 2;
+
+                    i++;
+                }
+            }
+
+            if (startIndex < byteArray.Length)
+            {
+                byte[] line = new byte[byteArray.Length - startIndex];
+                Array.Copy(byteArray, startIndex, line, 0, byteArray.Length - startIndex);
+                lines.Add(line);
+            }
+
+            return lines.ToArray();
+        }
+        
         /// <summary>
         /// Gets the lines.
         /// </summary>
         /// <value>The lines.</value>
-        public Queue<string> Lines
+        public Queue<byte[]> Lines
         {
             get { return _lines; }
         }
@@ -81,13 +135,16 @@ namespace sidepop.Mime
         {
             string lastHeader = string.Empty;
             string line = string.Empty;
-            // the first empty line is the end of the headers.
-            while (_lines.Count > 0 && !string.IsNullOrEmpty(_lines.Peek()))
-            {
-                line = _lines.Dequeue();
+            byte[] lineBytes = null;
 
+            // the first empty line is the end of the headers.
+            while (_lines.Count > 0 && !string.IsNullOrEmpty(ConvertBytesToStringWithDefaultEncoding(_lines.Peek())))
+            {
+                lineBytes = _lines.Dequeue();
+                line = ConvertBytesToStringWithDefaultEncoding(lineBytes);
                 //if a header line starts with a space or tab then it is a continuation of the
                 //previous line.
+
                 if (line.StartsWith(" ") || line.StartsWith(Convert.ToString('\t')))
                 {
                     _entity.Headers[lastHeader] = string.Concat(_entity.Headers[lastHeader], line);
@@ -227,18 +284,18 @@ namespace sidepop.Mime
             if (_entity.HasBoundary)
             {
                 while (_lines.Count > 0
-                       && !string.Equals(_lines.Peek(), _entity.EndBoundary))
+                       && !string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.EndBoundary))
                 {
                     /*Check to verify the current line is not the same as the parent starting boundary.  
                        If it is the same as the parent starting boundary this indicates existence of a 
                        new child entity. Return and process the next child.*/
                     if (_entity.Parent != null
-                        && string.Equals(_entity.Parent.StartBoundary, _lines.Peek()))
+                        && string.Equals(_entity.Parent.StartBoundary, ConvertBytesToStringWithDefaultEncoding(_lines.Peek())))
                     {
                         return;
                     }
 
-                    if (string.Equals(_lines.Peek(), _entity.StartBoundary))
+                    if (string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.StartBoundary))
                     {
                         AddChildEntity(_entity, _lines);
                     } //Parse a new child mime part.
@@ -258,24 +315,70 @@ namespace sidepop.Mime
                     }
                     else
                     {
-                        _entity.EncodedMessage.Append(string.Concat(_lines.Dequeue(), Pop3Commands.Crlf));
+                        AppendMessageContent();
                     } //Append the message content.
                 }
             } //Parse a multipart message.
             else
             {
-                while (_lines.Count > 0)
+                while (_lines.Count > 0 )
                 {
-                    _entity.EncodedMessage.Append(string.Concat(_lines.Dequeue(), Pop3Commands.Crlf));
+                    AppendMessageContent();                    
                 }
             } //Parse a single part message.
+        }
+
+        /// <summary>
+        /// Append the current queued line to the entity encoded / decoded message buffers
+        /// </summary>
+        private void AppendMessageContent()
+        {
+            byte[] lineBytes = _lines.Dequeue();
+            string decodedLine = ConvertBytesToStringWithCurrentContentTypeCharSet(lineBytes);
+
+            _entity.DecodedMessage.Append(string.Concat(decodedLine, Pop3Commands.Crlf));
+
+            //By decoding to default encoding, we are breaking the original content
+            _entity.EncodedMessage.Append(string.Concat(ConvertBytesToStringWithDefaultEncoding(lineBytes), Pop3Commands.Crlf));
+        }
+
+        /// <summary>
+        /// Converts bytes using the default encoding
+        /// </summary>
+        private string ConvertBytesToStringWithDefaultEncoding(byte[] line)
+        {
+            if (line == null)
+            {
+                return "";
+            }
+
+            return DefaultEncoding.GetString(line);
+        }
+
+        /// <summary>
+        /// Converts byte using the CharSet specified by the current Content-Type / charset header
+        /// </summary>
+        private string ConvertBytesToStringWithCurrentContentTypeCharSet(byte[] lineBytes)
+        {
+            Encoding encoding = DefaultEncoding;
+
+            if( ! string.IsNullOrEmpty( _entity.ContentType.CharSet ) )
+            {
+                try
+                {
+                    encoding = Encoding.GetEncoding(_entity.ContentType.CharSet);
+                }
+                catch { } //Ignore unknown encodings and default to DefaultEncoding
+            }
+
+            return encoding.GetString(lineBytes);
         }
 
         /// <summary>
         /// Adds the child entity.
         /// </summary>
         /// <param name="entity">The entity.</param>
-        private void AddChildEntity(MimeEntity entity, Queue<string> lines)
+        private void AddChildEntity(MimeEntity entity, Queue<byte[]> lines)
         {
             /*if (entity == null)
             {

@@ -51,10 +51,8 @@ namespace sidepop.Mail.Commands
 		{
 			Pop3Response response = Pop3Response.CreateResponse(buffer);
 			
-			MemoryStream responseStream = StripPop3HostMessage(buffer, response.HostMessage);
-			string[] messageLines = GetResponseLines(responseStream);
-
-			return new RetrieveResponse(response, messageLines, responseStream.ToArray());
+			MemoryStream responseStream = StripPop3HostMessage(buffer, response.HostMessage, ".");
+			return new RetrieveResponse(response, responseStream.ToArray());
 		}
 	}
 }
