@@ -140,7 +140,8 @@ namespace sidepop.Mime
             // the first empty line is the end of the headers.
             while (_lines.Count > 0 && !string.IsNullOrEmpty(ConvertBytesToStringWithDefaultEncoding(_lines.Peek())))
             {
-                lineBytes = _lines.Dequeue();
+                lineBytes = Dequeue();
+
                 line = ConvertBytesToStringWithDefaultEncoding(lineBytes);
                 //if a header line starts with a space or tab then it is a continuation of the
                 //previous line.
@@ -179,10 +180,24 @@ namespace sidepop.Mime
 
             if (_lines.Count > 0)
             {
-                _lines.Dequeue();
+                Dequeue();
             } //remove closing header CRLF.
 
             return _entity.Headers.Count;
+        }
+
+        /// <summary>
+        /// Consumes a line and add it to the raw content of this mime part.
+        /// </summary>
+        private byte[] Dequeue()
+        {
+            byte[] lineBytes = _lines.Dequeue();
+
+            _entity.RawContent.Write(lineBytes, 0, lineBytes.Length);
+            _entity.RawContent.WriteByte(Pop3Commands.Cr);
+            _entity.RawContent.WriteByte(Pop3Commands.Lf);
+
+            return lineBytes;
         }
 
         /// <summary>
@@ -333,7 +348,8 @@ namespace sidepop.Mime
         /// </summary>
         private void AppendMessageContent()
         {
-            byte[] lineBytes = _lines.Dequeue();
+            byte[] lineBytes = Dequeue();
+
             string decodedLine = ConvertBytesToStringWithCurrentContentTypeCharSet(lineBytes);
 
             _entity.DecodedMessage.Append(string.Concat(decodedLine, Pop3Commands.Crlf));
@@ -391,7 +407,11 @@ namespace sidepop.Mime
             }*/
 
             MimeReader reader = new MimeReader(entity, lines);
-            entity.Children.Add(reader.CreateMimeEntity());
+            MimeEntity childEntity = reader.CreateMimeEntity();
+            entity.Children.Add(childEntity);
+
+            byte[] innerBytes = childEntity.RawContent.ToArray();
+            entity.RawContent.Write(innerBytes, 0, innerBytes.Length);
         }
 
         /// <summary>

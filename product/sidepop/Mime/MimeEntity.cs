@@ -34,6 +34,7 @@ namespace sidepop.Mime
 			Parent = null;
 			_encodedMessage = new StringBuilder();
             _decodedMessage = new StringBuilder();
+            RawContent = new MemoryStream();
 		}
 
 		/// <summary>
@@ -187,7 +188,13 @@ namespace sidepop.Mime
 	    /// Gets or sets the content.
 	    /// </summary>
 	    /// <value>The content.</value>
-	    public MemoryStream Content { get; internal set; }
+        public MemoryStream Content { get; internal set; }
+
+        /// <summary>
+        /// Gets or sets the raw content.
+        /// </summary>
+        /// <value>The raw content.</value>
+        public MemoryStream RawContent { get; internal set; }
         
 	    /// <summary>
 		/// Sets the type of the content.
