@@ -322,8 +322,10 @@ namespace sidepop.Mime
 				} //add the alternative views.
 				else if (string.Equals(child.ContentType.MediaType, MediaTypes.MessageRfc822,
 				                       StringComparison.InvariantCultureIgnoreCase)
-				         &&
-				         string.Equals(child.ContentDisposition.DispositionType, DispositionTypeNames.Attachment,
+                         &&
+                            child.ContentDisposition != null // RFC 2183 specifies the 'Content-Disposition' header field, which is optional and valid for any MIME entity ("message" or "body part")
+                         && 
+                            string.Equals(child.ContentDisposition.DispositionType, DispositionTypeNames.Attachment,
 				                       StringComparison.InvariantCultureIgnoreCase))
 				{
 					message.Children.Add(ToMailMessageEx(child));
