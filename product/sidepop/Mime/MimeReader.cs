@@ -325,13 +325,9 @@ namespace sidepop.Mime
                     {
                         AddChildEntity(_entity, _lines);
                     } 
-                        //Parse a new child mime part.
-                    else if (string.Equals(_entity.ContentType.MediaType, MediaTypes.MessageRfc822, StringComparison.InvariantCultureIgnoreCase)
-                             &&
-                                _entity.ContentDisposition != null // RFC 2183 specifies the 'Content-Disposition' header field, which is optional and valid for any MIME entity ("message" or "body part")
-                             && 
-                                string.Equals(_entity.ContentDisposition.DispositionType, DispositionTypeNames.Attachment,
-                                           StringComparison.InvariantCultureIgnoreCase))
+                    
+                    //Parse a new child mime part.
+                    else if (string.Equals(_entity.ContentType.MediaType, MediaTypes.MessageRfc822, StringComparison.InvariantCultureIgnoreCase))
                     {
                         /*If the content type is message/rfc822 the stop condition to parse headers has already been encountered.
                          But, a content type of message/rfc822 would have the message headers immediately following the mime
