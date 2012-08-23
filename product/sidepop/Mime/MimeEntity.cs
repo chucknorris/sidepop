@@ -126,6 +126,23 @@ namespace sidepop.Mime
 	    public ContentDisposition ContentDisposition { get; set; }
 
 	    /// <summary>
+	    /// Gets the name of the MIME part.
+	    /// </summary>
+	    /// <value>The name of the MIME part.</value>
+	    public string Name
+	    {
+	        get
+	        {
+	            if (ContentDisposition != null && !String.IsNullOrEmpty(ContentDisposition.FileName))
+	            {
+	                return ContentDisposition.FileName;
+	            }
+	
+	            return ContentType.Name;
+	        }
+	    }
+
+	    /// <summary>
 	    /// Gets or sets the transfer encoding.
 	    /// </summary>
 	    /// <value>The transfer encoding.</value>
