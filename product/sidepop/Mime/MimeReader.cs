@@ -58,7 +58,7 @@ namespace sidepop.Mime
 
             _lines = lines;
             _entity = new MimeEntity(entity);
-		}
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MimeReader"/> class.
@@ -75,7 +75,7 @@ namespace sidepop.Mime
             _rawBytes = rawBytes;
 
             _lines = new Queue<byte[]>(SplitByteArrayWithCrLf(rawBytes));
-		}
+        }
 
         /// <summary>
         /// Splits a byte array using CrLf as the line delimiter.
@@ -88,8 +88,8 @@ namespace sidepop.Mime
             {
                 throw new ArgumentException("Value cannot be null", "byteArray");
             }
-            
-            if( byteArray.Length == 0)
+
+            if (byteArray.Length == 0)
             {
                 return lines.ToArray();
             }
@@ -121,7 +121,7 @@ namespace sidepop.Mime
 
             return lines.ToArray();
         }
-        
+
         /// <summary>
         /// Gets the lines.
         /// </summary>
@@ -274,8 +274,7 @@ namespace sidepop.Mime
                     break;
 
                 case TransferEncoding.QuotedPrintable:
-                    _entity.Content = new MemoryStream(GetBytes(QuotedPrintableEncoding.Decode(_entity.EncodedMessage.ToString())),
-                                                       false);
+                    _entity.Content = new MemoryStream(QuotedPrintableEncoding.Decode(_entity.EncodedMessage.ToString()), false);
                     break;
 
                 case TransferEncoding.SevenBit:
@@ -324,8 +323,8 @@ namespace sidepop.Mime
                     if (string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.StartBoundary))
                     {
                         AddChildEntity(_entity, _lines);
-                    } 
-                    
+                    }
+
                     //Parse a new child mime part.
                     else if (string.Equals(_entity.ContentType.MediaType, MediaTypes.MessageRfc822, StringComparison.InvariantCultureIgnoreCase))
                     {
@@ -345,9 +344,9 @@ namespace sidepop.Mime
             } //Parse a multipart message.
             else
             {
-                while (_lines.Count > 0 )
+                while (_lines.Count > 0)
                 {
-                    AppendMessageContent();                    
+                    AppendMessageContent();
                 }
             } //Parse a single part message.
         }
@@ -387,7 +386,7 @@ namespace sidepop.Mime
         {
             Encoding encoding = DefaultEncoding;
 
-            if( ! string.IsNullOrEmpty( _entity.ContentType.CharSet ) )
+            if (!string.IsNullOrEmpty(_entity.ContentType.CharSet))
             {
                 try
                 {
@@ -431,7 +430,7 @@ namespace sidepop.Mime
         public static ContentDisposition GetContentDisposition(string contentDisposition)
         {
             contentDisposition = contentDisposition.Replace("inline", "attachment");
-            
+
             return new ContentDisposition(contentDisposition);
         }
 
@@ -456,7 +455,7 @@ namespace sidepop.Mime
             }
             catch (Exception ex)
             {
-                Log.bound_to(typeof (MimeReader)).log_a_warning_event_containing(
+                Log.bound_to(typeof(MimeReader)).log_a_warning_event_containing(
                     "{0} was not able to use content type \"{1}\". Defaulting to \"text/plain; charset=us-ascii\".{2}{3}", ApplicationParameters.name, contentType, Environment.NewLine, ex.ToString());
                 return new ContentType("text/plain; charset=us-ascii");
             }
