@@ -15,7 +15,7 @@ namespace sidepop.Mail
     /// </summary>
     public class SidePOPMailMessage : MailMessage
     {
-        public const string EmailRegexPattern = "(['\"]{1,}.+['\"]{1,}\\s+)?<?[\\w\\.\\-%]+@[^\\.][\\w\\.\\-]+\\.[a-z]{2,}>?";
+        public const string EmailRegexPattern = "(['\"]{1,}.+?['\"]{1,}\\s+)?<?[\\w\\.\\-%]+@[^\\.][\\w\\.\\-]+\\.[a-z]{2,}>?";
         //private static readonly char[] AddressDelimiters = new char[] {',', ';'};
 
         /// <summary>
