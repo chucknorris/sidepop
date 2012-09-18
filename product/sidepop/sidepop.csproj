@@ -88,9 +88,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\SolutionVersion.cs">
-      <Link>SolutionVersion.cs</Link>
-    </Compile>
     <Compile Include="configuration\AccountConfigurationCollection.cs" />
     <Compile Include="configuration\AccountConfigurationElement.cs" />
     <Compile Include="configuration\SidePOPConfiguration.cs" />
