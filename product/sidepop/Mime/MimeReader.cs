@@ -429,9 +429,58 @@ namespace sidepop.Mime
         /// <returns></returns>
         public static ContentDisposition GetContentDisposition(string contentDisposition)
         {
-            contentDisposition = contentDisposition.Replace("inline", "attachment");
+            string epuratedContentDisposition = StripInvalidDateTime(contentDisposition);
 
-            return new ContentDisposition(contentDisposition);
+            ContentDisposition result = new ContentDisposition(epuratedContentDisposition);
+            return result;
+        }
+
+        /// <summary>
+        /// Remove any invalid date. 
+        /// Some client, like NOVEL_GROUPWISE store invalid date, such as Thu, 19 sep 2012. In 2012, September 19 was a wednesday
+        /// </summary>
+        private static string StripInvalidDateTime(string contentDisposition)
+        {
+            // extract the possible dates and ensure they will be parsed correctly
+            string result = RemoveIfInvalidDateTime(contentDisposition, "modification-date");
+            result = RemoveIfInvalidDateTime(result, "creation-date");
+            result = RemoveIfInvalidDateTime(result, "read-date");
+
+            return result;
+        }
+
+        /// <summary>
+        /// Parse for the received token, and if found, try to parse the date. If it fails, remove the whole token from the line
+        /// </summary>
+        /// <returns></returns>
+        private static string RemoveIfInvalidDateTime(string contentDisposition, string dateTokenName)
+        {
+            string result = contentDisposition;
+
+            string tokenToLook = dateTokenName + "=\"";
+
+            int dateTimeTokenStartIndex = result.IndexOf(dateTokenName);
+
+            if (dateTimeTokenStartIndex > -1)
+            {
+                // the DateTime value starts at the tokenIndex + its length
+                int dateTimeStartIndex = dateTimeTokenStartIndex + tokenToLook.Length;
+
+                // look for the next "
+                int endIndex = result.IndexOf( "\"", dateTimeStartIndex);
+
+                // get the string of the datetime
+                string dateValueString = result.Substring(dateTimeStartIndex, endIndex - dateTimeStartIndex);
+
+                DateTime parsedDt;
+                if (!DateTime.TryParse(dateValueString, out parsedDt))
+                { 
+                    //the date is not parsable, remove it from the string
+                    result = result.Substring(0, dateTimeTokenStartIndex) + result.Substring(endIndex + 1);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
