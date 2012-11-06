@@ -15,8 +15,20 @@ namespace sidepop.Mail
     /// </summary>
     public class SidePOPMailMessage : MailMessage
     {
-        public const string EmailRegexPattern = "(['\"]{1,}.+?['\"]{1,}\\s+)?<?[\\w\\.\\-%]+@[^\\.][\\w\\.\\-]+\\.[a-zA-Z0-9]{2,}>?";
+        public const string EmailRegexPattern = "(?:['\"]{1,}(.+?)['\"]{1,}\\s+)?(<?[\\w\\.\\-%\\s]+@[^\\.][\\w\\.\\-]+\\.[a-zA-Z0-9]{2,}>?)";
         //private static readonly char[] AddressDelimiters = new char[] {',', ';'};
+
+        public const string InvalidEmailAddress = "invalid@email.com";
+
+        /// <summary>
+        /// Returns whether the specified email denotes an invalid address.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public static bool IsInvalidEmailAddress(string address)
+        {
+            return String.Compare(address, InvalidEmailAddress, true) == 0;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SidePOPMailMessage"/> class.
@@ -243,13 +255,25 @@ namespace sidepop.Mail
         /// <returns></returns>
         public static MailAddress CreateMailAddress(string address)
         {
+            Match match = Regex.Match(address, EmailRegexPattern);
+            return CreateMailAddress(match.Groups[1].Value, match.Groups[2].Value);
+        }
+
+        /// <summary>
+        /// Creates the mail address.
+        /// </summary>
+        /// <param name="displayName">The display name.</param>
+        /// <param name="address">The address.</param>
+        /// <returns></returns>
+        public static MailAddress CreateMailAddress(string displayName, string address)
+        {
             try
             {
-                return new MailAddress(address.Trim('\t'));
+                return new MailAddress(address.Trim('\t'), displayName);
             }
-            catch (FormatException e)
+            catch (FormatException)
             {
-                throw new Pop3Exception("Unable to create mail address from provided string: " + address, e);
+                return new MailAddress(InvalidEmailAddress, displayName);
             }
         }
 
@@ -277,7 +301,7 @@ namespace sidepop.Mail
 
             foreach (Match match in email.Matches(addressList))
             {
-                yield return CreateMailAddress(match.Value);
+                yield return CreateMailAddress(match.Groups[1].Value, match.Groups[2].Value);
             }
 
 

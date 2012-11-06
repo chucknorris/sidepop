@@ -27,7 +27,7 @@ namespace sidepop.Mime
         /// </summary>
         static MimeReader()
         {
-            DefaultEncoding = Encoding.ASCII;
+            DefaultEncoding = Encoding.Default;
         }
 
         /// <summary>
