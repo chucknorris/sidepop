@@ -309,8 +309,7 @@ namespace sidepop.Mime
         {
             if (_entity.HasBoundary)
             {
-                while (_lines.Count > 0
-                       && !string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.EndBoundary))
+                while (!HasReachedEndOfPart())
                 {
                     /*Check to verify the current line is not the same as the parent starting boundary.  
                        If it is the same as the parent starting boundary this indicates existence of a 
@@ -333,17 +332,11 @@ namespace sidepop.Mime
                          But, a content type of message/rfc822 would have the message headers immediately following the mime
                          headers so we need to parse the headers for the attached message now.  This is done by creating
                          a new child entity.*/
-                        Queue<byte[]> childEntityLines = new Queue<byte[]>();
-
-                        while (_lines.Count > 0
-                               && !string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.EndBoundary))
-                        {
-                            childEntityLines.Enqueue(_lines.Dequeue());
-                        }
+                        Queue<byte[]> partLines = ReadPart();
 
                         // The complete rfc822 child entity may be encoded.
-                        Queue<byte[]> decodedChildEntityLines = DecodeChildEntityIfNeeded(_entity, childEntityLines);
-                        AddChildEntity(_entity, decodedChildEntityLines);
+                        Queue<byte[]> decodedPartLines = DecodePartIfNeeded(_entity, partLines);
+                        AddChildEntity(_entity, decodedPartLines);
                     }
                     else
                     {
@@ -358,6 +351,30 @@ namespace sidepop.Mime
                     AppendMessageContent();
                 }
             } //Parse a single part message.
+        }
+
+        /// <summary>
+        /// Returns whether the current line is the end of a part.
+        /// </summary>
+        private bool HasReachedEndOfPart()
+        {
+            return _lines.Count == 0
+                   || string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.EndBoundary);
+        }
+
+        /// <summary>
+        /// Reads all the lines of the current part.
+        /// </summary>
+        private Queue<byte[]> ReadPart()
+        {
+            Queue<byte[]> partLines = new Queue<byte[]>();
+
+            while (!HasReachedEndOfPart())
+            {
+                partLines.Enqueue(_lines.Dequeue());
+            }
+
+            return partLines;
         }
 
         /// <summary>
@@ -432,9 +449,9 @@ namespace sidepop.Mime
         }
 
         /// <summary>
-        /// Decodes the specified child entity if needed.
+        /// Decodes the specified part if needed.
         /// </summary>
-        private Queue<byte[]> DecodeChildEntityIfNeeded(MimeEntity parentEntity, Queue<byte[]> lines)
+        private Queue<byte[]> DecodePartIfNeeded(MimeEntity parentEntity, Queue<byte[]> lines)
         {
             if (parentEntity.ContentTransferEncoding == TransferEncoding.Base64)
             {
