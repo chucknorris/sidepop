@@ -21,16 +21,6 @@ namespace sidepop.Mail
         public const string InvalidEmailAddress = "invalid@email.com";
 
         /// <summary>
-        /// Returns whether the specified email denotes an invalid address.
-        /// </summary>
-        /// <param name="address"></param>
-        /// <returns></returns>
-        public static bool IsInvalidEmailAddress(string address)
-        {
-            return String.Compare(address, InvalidEmailAddress, true) == 0;
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="SidePOPMailMessage"/> class.
         /// </summary>
         public SidePOPMailMessage()
@@ -267,6 +257,10 @@ namespace sidepop.Mail
         /// <returns></returns>
         public static MailAddress CreateMailAddress(string displayName, string address)
         {
+            // Our regular expression may have captured an invalid email address
+            // according to the MailAddress class. It could for example contain
+            // spaces or other invalid characters. If that is the case, we
+            // at least keep the display name and use a constant address.
             try
             {
                 return new MailAddress(address.Trim('\t'), displayName);
