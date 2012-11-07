@@ -3,6 +3,7 @@ namespace sidepop.Mime
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using System.IO;
     using System.Net.Mime;
     using infrastructure;
@@ -332,9 +333,17 @@ namespace sidepop.Mime
                          But, a content type of message/rfc822 would have the message headers immediately following the mime
                          headers so we need to parse the headers for the attached message now.  This is done by creating
                          a new child entity.*/
-                        AddChildEntity(_entity, _lines);
+                        Queue<byte[]> childEntityLines = new Queue<byte[]>();
 
-                        break;
+                        while (_lines.Count > 0
+                               && !string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.EndBoundary))
+                        {
+                            childEntityLines.Enqueue(_lines.Dequeue());
+                        }
+
+                        // The complete rfc822 child entity may be encoded.
+                        Queue<byte[]> decodedChildEntityLines = DecodeChildEntityIfNeeded(_entity, childEntityLines);
+                        AddChildEntity(_entity, decodedChildEntityLines);
                     }
                     else
                     {
@@ -420,6 +429,22 @@ namespace sidepop.Mime
 
             byte[] innerBytes = childEntity.RawContent.ToArray();
             entity.RawContent.Write(innerBytes, 0, innerBytes.Length);
+        }
+
+        /// <summary>
+        /// Decodes the specified child entity if needed.
+        /// </summary>
+        private Queue<byte[]> DecodeChildEntityIfNeeded(MimeEntity parentEntity, Queue<byte[]> lines)
+        {
+            if (parentEntity.ContentTransferEncoding == TransferEncoding.Base64)
+            {
+                byte[] encodedBytes = lines.SelectMany(childEntityLine => childEntityLine).ToArray();
+                string encodedString = ConvertBytesToStringWithDefaultEncoding(encodedBytes);
+                byte[] decodedBytes = Convert.FromBase64String(encodedString);
+                return new Queue<byte[]>(SplitByteArrayWithCrLf(decodedBytes));
+            }
+
+            return lines;
         }
 
         /// <summary>
