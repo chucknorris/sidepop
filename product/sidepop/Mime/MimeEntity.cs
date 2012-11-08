@@ -35,6 +35,8 @@ namespace sidepop.Mime
 			_encodedMessage = new StringBuilder();
             _decodedMessage = new StringBuilder();
             RawContent = new MemoryStream();
+
+            ContentTransferEncoding = System.Net.Mime.TransferEncoding.SevenBit; // RFC 2045 -- "Content-Transfer-Encoding: 7BIT" is assumed if the Content-Transfer-Encoding header field is not present.
 		}
 
 		/// <summary>
