@@ -6,10 +6,11 @@ namespace sidepop.Mime
     using System.Linq;
     using System.IO;
     using System.Net.Mime;
+    using System.Text;
+    using System.Text.RegularExpressions;
     using infrastructure;
     using infrastructure.logging;
     using Mail.Commands;
-    using System.Text;
 
     /// <summary>
     /// This class is responsible for parsing a string array of lines
@@ -492,6 +493,28 @@ namespace sidepop.Mime
         }
 
         /// <summary>
+        /// Returns whether the specified string represents a valid date time.
+        /// </summary>
+        private static bool IsInvalidDateTime(string dateValueString)
+        {
+            // RFC 2822 states that days can be expressed using one or two digits.
+            // But the .NET ContentDisposition class insists on receiving two.
+            if (!Regex.IsMatch(dateValueString, @"..., \d\d.*"))
+            {
+                return false;
+            }
+
+            // Make sure the date is parsable.
+            DateTime parsedDt;
+            if (!DateTime.TryParse(dateValueString, out parsedDt))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Parse for the received token, and if found, try to parse the date. If it fails, remove the whole token from the line
         /// </summary>
         /// <returns></returns>
@@ -514,8 +537,7 @@ namespace sidepop.Mime
                 // get the string of the datetime
                 string dateValueString = result.Substring(dateTimeStartIndex, endIndex - dateTimeStartIndex);
 
-                DateTime parsedDt;
-                if (!DateTime.TryParse(dateValueString, out parsedDt))
+                if (!IsInvalidDateTime(dateValueString))
                 { 
                     //the date is not parsable, remove it from the string
                     result = result.Substring(0, dateTimeTokenStartIndex) + result.Substring(endIndex + 1);
