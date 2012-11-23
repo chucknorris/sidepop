@@ -148,9 +148,9 @@ namespace sidepop.Mime
                 lineBytes = Dequeue();
 
                 line = ConvertBytesToStringWithDefaultEncoding(lineBytes);
+
                 //if a header line starts with a space or tab then it is a continuation of the
                 //previous line.
-
                 if (line.StartsWith(" ") || line.StartsWith(Convert.ToString('\t')))
                 {
                     _entity.Headers[lastHeader] = string.Concat(_entity.Headers[lastHeader], line);
@@ -161,7 +161,7 @@ namespace sidepop.Mime
 
                 if (separatorIndex < 0)
                 {
-                    Debug.WriteLine("Invalid header:{0}", line);
+                    Debug.WriteLine(string.Format("Invalid header:{0}", line));
                     continue;
                 } //This is an invalid header field.  Ignore this line.
 
@@ -312,15 +312,6 @@ namespace sidepop.Mime
             {
                 while (!HasReachedEndOfPart())
                 {
-                    /*Check to verify the current line is not the same as the parent starting boundary.  
-                       If it is the same as the parent starting boundary this indicates existence of a 
-                       new child entity. Return and process the next child.*/
-                    if (_entity.Parent != null
-                        && string.Equals(_entity.Parent.StartBoundary, ConvertBytesToStringWithDefaultEncoding(_lines.Peek())))
-                    {
-                        return;
-                    }
-
                     if (string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.StartBoundary))
                     {
                         AddChildEntity(_entity, _lines);
@@ -355,12 +346,43 @@ namespace sidepop.Mime
         }
 
         /// <summary>
+        /// Returns whether the current line matches the parent boundary
+        /// </summary>
+        private bool HasReachParentBoundary(string line)
+        {
+            if (_entity.Parent == null)
+            {
+                return false;
+            }
+
+            return string.Equals(_entity.Parent.StartBoundary, line) ||
+                string.Equals(_entity.Parent.EndBoundary, line);
+        }
+
+        /// <summary>
         /// Returns whether the current line is the end of a part.
         /// </summary>
         private bool HasReachedEndOfPart()
         {
-            return _lines.Count == 0
-                   || string.Equals(ConvertBytesToStringWithDefaultEncoding(_lines.Peek()), _entity.EndBoundary);
+            // No more lines to process,
+            // we have reached the end of the current part.
+            if (_lines.Count == 0)
+            {
+                return true;
+            }
+
+            string currentLine = ConvertBytesToStringWithDefaultEncoding(_lines.Peek());
+
+            // If the current line is the current entity end boundary, 
+            // we have reached the end of the current part.
+            if (string.Equals(currentLine, _entity.EndBoundary))
+            {
+                return true;
+            }
+
+            // If the current line is the start or the end of the entity's parent boundary,
+            // we have reached the end of the current part.
+            return HasReachParentBoundary(currentLine);
         }
 
         /// <summary>
