@@ -15,7 +15,7 @@ namespace sidepop.Mail
     /// </summary>
     public class SidePOPMailMessage : MailMessage
     {
-        public const string EmailRegexPattern = "(?:['\"]{1,}(.+?)['\"]{1,}\\s+)?(<?[\\w\\.\\-%\\s]+@[^\\.][\\w\\.\\-]+\\.[a-zA-Z0-9]{2,}>?)";
+        public const string EmailRegexPattern = "(?:['\"]{1,}(.+?)['\"]{1,}\\s+)?(<?[\\w\\.\\-%\\s]+@[^\\.][\\w\\.\\-]+(\\.[a-zA-Z0-9]{2,})?>?)";
         //private static readonly char[] AddressDelimiters = new char[] {',', ';'};
 
         public const string InvalidEmailAddress = "invalid@email.com";
@@ -246,7 +246,17 @@ namespace sidepop.Mail
         public static MailAddress CreateMailAddress(string address)
         {
             Match match = Regex.Match(address, EmailRegexPattern);
-            return CreateMailAddress(match.Groups[1].Value, match.Groups[2].Value);
+
+            if (match.Success)
+            {
+                return CreateMailAddress(match.Groups[1].Value, match.Groups[2].Value);
+            }
+            else
+            {
+                ArgumentException ex = new ArgumentException("The received mail address is not valid", "address");
+                ex.Data.Add("address", address);
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -257,13 +267,20 @@ namespace sidepop.Mail
         /// <returns></returns>
         public static MailAddress CreateMailAddress(string displayName, string address)
         {
+            string addressToUse = address;
+
+            if (string.IsNullOrEmpty(addressToUse))
+            {
+                addressToUse = InvalidEmailAddress;
+            }
+
             // Our regular expression may have captured an invalid email address
             // according to the MailAddress class. It could for example contain
             // spaces or other invalid characters. If that is the case, we
             // at least keep the display name and use a constant address.
             try
             {
-                return new MailAddress(address.Trim('\t'), displayName);
+                return new MailAddress(addressToUse.Trim('\t'), displayName);
             }
             catch (FormatException)
             {
