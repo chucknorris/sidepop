@@ -6,6 +6,7 @@ using System.Net.Mail;
 using System.Net.Mime;
 using System.Text;
 using sidepop.Mail;
+using sidepop.Mail.Commands;
 
 namespace sidepop.Mime
 {
@@ -14,8 +15,8 @@ namespace sidepop.Mime
 	/// </summary>
 	public class MimeEntity
 	{
-        private readonly StringBuilder _encodedMessage;
-        private readonly StringBuilder _decodedMessage;
+        private MemoryStream _contentBytes;
+        private StringBuilder _decodedMessage;
 	    private readonly string _startBoundary;
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace sidepop.Mime
 			Headers = new NameValueCollection();
 			ContentType = MimeReader.GetContentType(string.Empty);
 			Parent = null;
-			_encodedMessage = new StringBuilder();
+            _contentBytes = new MemoryStream();
             _decodedMessage = new StringBuilder();
             RawContent = new MemoryStream();
 
@@ -54,24 +55,58 @@ namespace sidepop.Mime
 			_startBoundary = parent.StartBoundary;
 		}
 
+        /// <summary>
+        /// Append content to current content bytes and decoded message
+        /// </summary>
+        public void AppendContent(byte[] lineBytes)
+        {
+            _contentBytes.Write(lineBytes, 0, lineBytes.Length);
+
+            string decodedLine = ConvertBytesToStringWithCurrentContentTypeCharSet(lineBytes);
+
+            _decodedMessage.Append(string.Concat(decodedLine, Pop3Commands.Crlf));
+        }
+
 		/// <summary>
-		/// Gets the encoded message.
+        /// Gets the ContentBytes
 		/// </summary>
-		/// <value>The encoded message.</value>
-		public StringBuilder EncodedMessage
+        /// <value>The ContentBytes.</value>
+        public byte[] ContentBytes
 		{
-			get { return _encodedMessage; }
+            get { return _contentBytes.ToArray(); }
         }
 
         /// <summary>
         /// Gets the decoded message.
         /// </summary>
         /// <value>The decoded message.</value>
-        public StringBuilder DecodedMessage
+        public string DecodedMessage
         {
-            get { return _decodedMessage; }
+            get 
+            {
+                return _decodedMessage.ToString(); 
+            }
         }
 
+
+        /// <summary>
+        /// Converts byte using the CharSet specified by the current Content-Type / charset header
+        /// </summary>
+        private string ConvertBytesToStringWithCurrentContentTypeCharSet(byte[] lineBytes)
+        {
+            Encoding encoding = Encoding.Default;
+
+            if (!string.IsNullOrEmpty(ContentType.CharSet))
+            {
+                try
+                {
+                    encoding = Encoding.GetEncoding(ContentType.CharSet);
+                }
+                catch { } //Ignore unknown encodings and default to DefaultEncoding
+            }
+
+            return encoding.GetString(lineBytes);
+        }
 
 	    /// <summary>
 	    /// Gets the children.
@@ -478,5 +513,5 @@ namespace sidepop.Mime
 
 			return attachment;
 		}
-	}
+    }
 }

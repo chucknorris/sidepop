@@ -224,7 +224,7 @@ namespace sidepop.Mail
                         message.From = CreateMailAddress(value);
                         break;
                     case MailHeaders.ReplyTo:
-                        message.ReplyTo = CreateMailAddress(value);
+                        message.ReplyToList.Add(CreateMailAddress(value));
                         break;
                     case MailHeaders.Subject:
                         message.Subject = value;

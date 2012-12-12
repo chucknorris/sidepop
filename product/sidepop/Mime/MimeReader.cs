@@ -272,16 +272,18 @@ namespace sidepop.Mime
             switch (_entity.ContentTransferEncoding)
             {
                 case TransferEncoding.Base64:
-                    _entity.Content = new MemoryStream(Convert.FromBase64String(_entity.EncodedMessage.ToString()), false);
+                    string base64String = DefaultEncoding.GetString(_entity.ContentBytes.ToArray());
+                    _entity.Content = new MemoryStream(Convert.FromBase64String(base64String), false);
                     break;
 
                 case TransferEncoding.QuotedPrintable:
-                    _entity.Content = new MemoryStream(QuotedPrintableEncoding.Decode(_entity.EncodedMessage.ToString()), false);
+                    string qEncodedString = DefaultEncoding.GetString(_entity.ContentBytes.ToArray());
+                    _entity.Content = new MemoryStream(QuotedPrintableEncoding.Decode(qEncodedString), false);
                     break;
 
                 case TransferEncoding.SevenBit:
                 default:
-                    _entity.Content = new MemoryStream(GetBytes(_entity.EncodedMessage.ToString()), false);
+                    _entity.Content = new MemoryStream(_entity.ContentBytes.ToArray(), false);
                     break;
             }
         }
@@ -399,7 +401,7 @@ namespace sidepop.Mime
 
             return partLines;
         }
-
+        
         /// <summary>
         /// Append the current queued line to the entity encoded / decoded message buffers
         /// </summary>
@@ -407,12 +409,7 @@ namespace sidepop.Mime
         {
             byte[] lineBytes = Dequeue();
 
-            string decodedLine = ConvertBytesToStringWithCurrentContentTypeCharSet(lineBytes);
-
-            _entity.DecodedMessage.Append(string.Concat(decodedLine, Pop3Commands.Crlf));
-
-            //By decoding to default encoding, we are breaking the original content
-            _entity.EncodedMessage.Append(string.Concat(ConvertBytesToStringWithDefaultEncoding(lineBytes), Pop3Commands.Crlf));
+            _entity.AppendContent(lineBytes);
         }
 
         /// <summary>
@@ -426,25 +423,6 @@ namespace sidepop.Mime
             }
 
             return DefaultEncoding.GetString(line);
-        }
-
-        /// <summary>
-        /// Converts byte using the CharSet specified by the current Content-Type / charset header
-        /// </summary>
-        private string ConvertBytesToStringWithCurrentContentTypeCharSet(byte[] lineBytes)
-        {
-            Encoding encoding = DefaultEncoding;
-
-            if (!string.IsNullOrEmpty(_entity.ContentType.CharSet))
-            {
-                try
-                {
-                    encoding = Encoding.GetEncoding(_entity.ContentType.CharSet);
-                }
-                catch { } //Ignore unknown encodings and default to DefaultEncoding
-            }
-
-            return encoding.GetString(lineBytes);
         }
 
         /// <summary>

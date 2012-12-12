@@ -10,6 +10,7 @@ using sidepop.Mime;
 namespace sidepop.Mail
 {
     using infrastructure.logging;
+    using System.Text;
 
     /// <summary>
     /// The DefaultPop3Client class provides a wrapper for the Pop3 commands
@@ -208,7 +209,8 @@ namespace sidepop.Mail
 
             string errorMessage = string.IsNullOrEmpty(error) ? response.HostMessage : string.Concat(error, ": ", error);
 
-            throw new Pop3Exception(errorMessage);
+            string responseContent = Encoding.ASCII.GetString( response.ResponseContents );
+            throw new Pop3Exception(errorMessage + "\r\n\t" + responseContent.Replace("\n", "\n\t"));
         }
 
         /// <summary>
