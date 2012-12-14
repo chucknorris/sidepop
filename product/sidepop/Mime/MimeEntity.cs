@@ -89,23 +89,40 @@ namespace sidepop.Mime
         }
 
 
+
+        /// <summary>
+        /// Returns the encoding to use for the specified charset
+        /// </summary>
+        public static Encoding GetEncoding(string charset)
+        {
+            if (string.IsNullOrEmpty(charset))
+            {
+                return Encoding.ASCII;
+            }
+
+            if (charset.ToUpper().Contains("UNKNOWN"))
+            {
+                return Encoding.ASCII;
+            }
+
+            try
+            {
+                return Encoding.GetEncoding(charset);
+            }
+            catch
+            {
+                //Ignore unknown encodings
+                return Encoding.ASCII;
+            }
+        }
+
+
         /// <summary>
         /// Converts byte using the CharSet specified by the current Content-Type / charset header
         /// </summary>
         private string ConvertBytesToStringWithCurrentContentTypeCharSet(byte[] lineBytes)
         {
-            Encoding encoding = Encoding.Default;
-
-            if (!string.IsNullOrEmpty(ContentType.CharSet))
-            {
-                try
-                {
-                    encoding = Encoding.GetEncoding(ContentType.CharSet);
-                }
-                catch { } //Ignore unknown encodings and default to DefaultEncoding
-            }
-
-            return encoding.GetString(lineBytes);
+            return GetEncoding(ContentType.CharSet).GetString(lineBytes);
         }
 
 	    /// <summary>
@@ -333,21 +350,7 @@ namespace sidepop.Mime
 		/// <param name="contentType">Type of the content.</param>
 		public Encoding GetEncoding()
 		{
-			if (string.IsNullOrEmpty(ContentType.CharSet))
-			{
-				return Encoding.ASCII;
-			}
-			else
-			{
-				try
-				{
-					return Encoding.GetEncoding(ContentType.CharSet);
-				}
-				catch (ArgumentException)
-				{
-					return Encoding.ASCII;
-				}
-			}
+			return GetEncoding(ContentType.CharSet);
 		}
 
 		/// <summary>
