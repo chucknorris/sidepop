@@ -95,6 +95,12 @@ namespace sidepop.Mime
         /// </summary>
         public static Encoding GetEncoding(string charset)
         {
+            //In this method,, We should eventually use an external library for detecting encoding in case Encoding.GetEncoding fails
+            //This would mean that we have to provide the byte[] in this method.
+            //Here is an example of a library we could use:
+            //Ude is a C# port of Mozilla Universal Charset Detector. http://code.google.com/p/ude/
+
+
             if (string.IsNullOrEmpty(charset))
             {
                 return Encoding.ASCII;
@@ -102,7 +108,7 @@ namespace sidepop.Mime
 
             if (charset.ToUpper().Contains("UNKNOWN"))
             {
-                return Encoding.ASCII;
+                return Encoding.UTF8;
             }
 
             try
