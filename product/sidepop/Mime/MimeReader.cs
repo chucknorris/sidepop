@@ -23,6 +23,7 @@ namespace sidepop.Mime
         private readonly MimeEntity _entity;
         private readonly Queue<byte[]> _lines;
         private byte[] _rawBytes;
+        private bool _throwOnInvalidContentType;
 
         /// <summary>
         /// Static Ctor
@@ -35,9 +36,10 @@ namespace sidepop.Mime
         /// <summary>
         /// Initializes a new instance of the <see cref="MimeReader"/> class.
         /// </summary>
-        private MimeReader()
+        private MimeReader(bool throwOnInvalidContentType)
         {
             _entity = new MimeEntity();
+            _throwOnInvalidContentType = throwOnInvalidContentType;
         }
 
         /// <summary>
@@ -45,8 +47,8 @@ namespace sidepop.Mime
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <param name="lines">The lines.</param>
-        private MimeReader(MimeEntity entity, Queue<byte[]> lines)
-            : this()
+        private MimeReader(MimeEntity entity, Queue<byte[]> lines, bool throwOnInvalidContentType)
+            : this(throwOnInvalidContentType)
         {
             if (entity == null)
             {
@@ -65,9 +67,10 @@ namespace sidepop.Mime
         /// <summary>
         /// Initializes a new instance of the <see cref="MimeReader"/> class.
         /// </summary>
-        /// <param name="lines">The lines.</param>
-        public MimeReader(byte[] rawBytes)
-            : this()
+        /// <param name="rawBytes">The raw bytes of the message.</param>
+        /// <param name="throwOnInvalidContentType">Determine if an invalid content type should raise an exception.</param>
+        public MimeReader(byte[] rawBytes, bool throwOnInvalidContentType = false)
+            : this(throwOnInvalidContentType)
         {
             if (rawBytes == null)
             {
@@ -229,7 +232,7 @@ namespace sidepop.Mime
                         _entity.ContentTransferEncoding = GetTransferEncoding(_entity.Headers[key]);
                         break;
                     case "content-type":
-                        _entity.SetContentType(GetContentType(_entity.Headers[key]));
+                        _entity.SetContentType(GetContentType(_entity.Headers[key], _throwOnInvalidContentType));
                         break;
                     case "mime-version":
                         _entity.MimeVersion = _entity.Headers[key];
@@ -258,7 +261,7 @@ namespace sidepop.Mime
             }
             catch (Exception ex)
             {
-                MimeParserException exception = new MimeParserException(_rawBytes, "An error occured while creating the Mime Entity", ex);
+                MimeParserException exception = new MimeParserException(_rawBytes, "An error occured while creating the Mime Entity", _entity, ex);
                 throw exception;
             }
         }
@@ -441,7 +444,7 @@ namespace sidepop.Mime
                 return;
             }*/
 
-            MimeReader reader = new MimeReader(entity, lines);
+            MimeReader reader = new MimeReader(entity, lines, _throwOnInvalidContentType);
             MimeEntity childEntity = reader.CreateMimeEntity();
             entity.Children.Add(childEntity);
 
@@ -552,7 +555,7 @@ namespace sidepop.Mime
         /// </summary>
         /// <param name="contentType">Type of the content.</param>
         /// <returns></returns>
-        public static ContentType GetContentType(string contentType)
+        public static ContentType GetContentType(string contentType, bool throwOnInvalidContentType = false)
         {
             if (string.IsNullOrEmpty(contentType))
             {
@@ -568,11 +571,15 @@ namespace sidepop.Mime
             }
             catch (Exception ex)
             {
+                if (throwOnInvalidContentType)
+                {
+                    throw;
+                }
+
                 Log.bound_to(typeof(MimeReader)).log_a_warning_event_containing(
                     "{0} was not able to use content type \"{1}\". Defaulting to \"text/plain; charset=us-ascii\".{2}{3}", ApplicationParameters.name, contentType, Environment.NewLine, ex.ToString());
                 return new ContentType("text/plain; charset=us-ascii");
             }
-
         }
 
         /// <summary>

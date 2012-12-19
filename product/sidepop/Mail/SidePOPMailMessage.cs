@@ -244,7 +244,12 @@ namespace sidepop.Mail
         /// <param name="address">The address.</param>
         /// <returns></returns>
         public static MailAddress CreateMailAddress(string address)
-        {
+        {            
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                return new MailAddress(SidePOPMailMessage.InvalidEmailAddress);
+            }
+
             Match match = Regex.Match(address, EmailRegexPattern);
 
             if (match.Success)

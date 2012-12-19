@@ -21,6 +21,15 @@ namespace sidepop.Mime
         }
 
         /// <summary>
+        /// The partially created MimeEntity during parsing
+        /// </summary>
+        public MimeEntity PartialMimeEntity
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// Default constructor
         /// </summary>
         public MimeParserException()
@@ -49,9 +58,10 @@ namespace sidepop.Mime
         /// <summary>
         /// .Ctor()
         /// </summary>
-        public MimeParserException(byte[] rawBytes, string message, Exception innerException)
+        public MimeParserException(byte[] rawBytes, string message, MimeEntity partialMimeEntity, Exception innerException)
             :base(message, innerException)
         {
+            PartialMimeEntity = partialMimeEntity;
             RawBytes = rawBytes;
         }
     }

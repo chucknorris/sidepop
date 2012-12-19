@@ -405,7 +405,7 @@ namespace sidepop.Mail
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns>A MimeEntity for the requested Pop3 Mail Item.</returns>
-        public MimeEntity RetrieveMimeEntity(Pop3ListItemResult item)
+        public byte[] Retrieve(Pop3ListItemResult item)
         {
             if (item == null)
             {
@@ -423,10 +423,19 @@ namespace sidepop.Mail
                 response = ExecuteCommand<RetrieveResponse, RetrieveCommand>(command);
             }
 
-            MimeReader reader = new MimeReader(response.RawBytes);
-            MimeEntity entity = reader.CreateMimeEntity();
-            entity.RawBytes = response.RawBytes;
-            return entity;
+            return response.RawBytes;
+        }
+
+        /// <summary>
+        /// Retrieves the specified message.
+        /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns>A MimeEntity for the requested Pop3 Mail Item.</returns>
+        public MimeEntity RetrieveMimeEntity(Pop3ListItemResult item)
+        {
+            byte[] rawBytes = Retrieve(item);
+
+            return MimeEntity.CreateFrom(rawBytes);
         }
 
         public SidePOPMailMessage Top(int messageId, int lineCount)

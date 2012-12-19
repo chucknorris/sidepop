@@ -106,6 +106,13 @@ namespace sidepop.Mail
         List<Pop3ListItemResult> List();
 
         /// <summary>
+        /// Retrieves the specified message and returns the result bytes.
+        /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns>the message bytes.</returns>
+        byte[] Retrieve(Pop3ListItemResult item);
+
+        /// <summary>
         /// Retrieves the specified message.
         /// </summary>
         /// <param name="item">The item.</param>

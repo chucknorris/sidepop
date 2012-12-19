@@ -40,6 +40,19 @@ namespace sidepop.Mime
             ContentTransferEncoding = System.Net.Mime.TransferEncoding.SevenBit; // RFC 2045 -- "Content-Transfer-Encoding: 7BIT" is assumed if the Content-Transfer-Encoding header field is not present.
 		}
 
+        /// <summary>
+        /// Create MimeEntity from the given bytes
+        /// </summary>
+        /// <param name="bytes">The bytes to read</param>
+        /// <returns>The parsed MimeEntity</returns>
+        public static MimeEntity CreateFrom(byte[] bytes, bool throwOnInvalidContentType = false)
+        {
+            MimeReader reader = new MimeReader(bytes, throwOnInvalidContentType);
+            MimeEntity entity = reader.CreateMimeEntity();
+            entity.RawBytes = bytes;
+            return entity;
+        }
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MimeEntity"/> class.
 		/// </summary>
