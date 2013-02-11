@@ -458,46 +458,22 @@ namespace sidepop.Mime
         private Queue<byte[]> DecodePartIfNeeded(MimeEntity parentEntity, Queue<byte[]> lines)
         {
             if (parentEntity.ContentTransferEncoding == TransferEncoding.Base64)
-            {
-                byte[] encodedBytes = RebuildEncodedBytes(lines);
-                byte[] decodedBytes = null;
+            {               
                 try
                 {
-                    string encodedString = ConvertBytesToStringWithDefaultEncoding(encodedBytes);
-                    decodedBytes = Convert.FromBase64String(encodedString);
+                     byte[] encodedBytes = lines.SelectMany(childEntityLine => childEntityLine).ToArray();
+                     string encodedString = ConvertBytesToStringWithDefaultEncoding(encodedBytes);
+                     byte[] decodedBytes = Convert.FromBase64String(encodedString);
+                     return new Queue<byte[]>(SplitByteArrayWithCrLf(decodedBytes));
                 }
                 catch
                 {
                     //It happens that invalid transfer encoding is specified, just consider that this part is not encoded with Base64
-                    decodedBytes = encodedBytes;
+                    return lines;
                 }
-
-                return new Queue<byte[]>(SplitByteArrayWithCrLf(decodedBytes));
             }
 
             return lines;
-        }
-
-        /// <summary>
-        /// Converts the queue of byte into the original byte array (with CrLf)
-        /// </summary>
-        private static byte[] RebuildEncodedBytes(Queue<byte[]> lines)
-        {
-            MemoryStream ms = new MemoryStream();
-            for (int i = 0; i < lines.Count; i++)
-            {
-                if (i != 0)
-                {
-                    ms.WriteByte(Pop3Commands.Cr);
-                    ms.WriteByte(Pop3Commands.Lf);
-                }
-
-                byte[] line = lines.Dequeue();
-                ms.Write(line, 0, line.Length);
-            }
-
-            byte[] encodedBytes = ms.ToArray();
-            return encodedBytes;
         }
 
         /// <summary>
