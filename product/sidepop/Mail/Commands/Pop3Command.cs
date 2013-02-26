@@ -19,12 +19,13 @@ namespace sidepop.Mail.Commands
     /// <typeparam name="T"></typeparam>
     internal abstract class Pop3Command<T> : Command, IDisposable where T : Pop3Response
     {
-        private const int BufferSize = 1024;
+        private const int BufferSize = 10 * 1024;
         private const string MessageTerminator = ".";
         private const string MultilineMessageTerminator = "\r\n.\r\n";
         private readonly byte[] _buffer;
         private readonly ManualResetEvent _manualResetEvent;
         private readonly MemoryStream _responseContents;
+        private LastBytesTracker _lastBytesTracker;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Pop3Command"/> class.
@@ -42,6 +43,7 @@ namespace sidepop.Mail.Commands
             _manualResetEvent = new ManualResetEvent(false);
             _buffer = new byte[BufferSize];
             _responseContents = new MemoryStream();
+            _lastBytesTracker = new LastBytesTracker(5);
             NetworkStream = stream;
             IsMultiline = isMultiline;
             ValidExecuteState = validExecuteState;
@@ -197,10 +199,11 @@ namespace sidepop.Mail.Commands
         /// <returns></returns>
         private string WriteReceivedBytesToBuffer(int bytesReceived)
         {
+            _lastBytesTracker.AddBytes(_buffer, bytesReceived);
+
             _responseContents.Write(_buffer, 0, bytesReceived);
-            byte[] contents = _responseContents.ToArray();
-            if (contents.Length == 0) return String.Empty;
-            return Encoding.ASCII.GetString(contents, (contents.Length > 5 ? contents.Length - 5 : 0), 5);
+
+            return Encoding.ASCII.GetString(_lastBytesTracker.LastBytes);
         }
 
         /// <summary>
