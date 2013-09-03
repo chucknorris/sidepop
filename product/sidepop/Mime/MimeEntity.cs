@@ -48,8 +48,7 @@ namespace sidepop.Mime
         public static MimeEntity CreateFrom(byte[] bytes, bool throwOnInvalidContentType = false)
         {
             MimeReader reader = new MimeReader(bytes, throwOnInvalidContentType);
-            MimeEntity entity = reader.CreateMimeEntity();
-            entity.RawBytes = bytes;
+            MimeEntity entity = reader.CreateMimeEntity();           
             return entity;
         }
 

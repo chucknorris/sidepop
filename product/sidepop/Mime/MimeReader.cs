@@ -20,6 +20,7 @@ namespace sidepop.Mime
     {
         private static readonly char[] HeaderWhitespaceChars = new[] { ' ', '\t' };
         private static Encoding DefaultEncoding;
+        private static Regex UnquotedEncodedString = new Regex("(?<!\")=\\?([^\\?]+)\\?([BbQq])\\?([^\\?]+)\\?=(?!\")", RegexOptions.Compiled);
         private readonly MimeEntity _entity;
         private readonly Queue<byte[]> _lines;
         private byte[] _rawBytes;
@@ -78,6 +79,7 @@ namespace sidepop.Mime
             }
 
             _rawBytes = rawBytes;
+            _entity.RawBytes = rawBytes;
 
             _lines = new Queue<byte[]>(SplitByteArrayWithCrLf(rawBytes));
         }
@@ -484,6 +486,7 @@ namespace sidepop.Mime
         public static ContentDisposition GetContentDisposition(string contentDisposition)
         {
             string epuratedContentDisposition = StripInvalidDateTime(contentDisposition);
+            epuratedContentDisposition = FixUnquotedEncodedString(epuratedContentDisposition);
 
             ContentDisposition result = new ContentDisposition(epuratedContentDisposition);
             return result;
@@ -523,6 +526,20 @@ namespace sidepop.Mime
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Ensure that a value representing a encoded value is surrounded with
+        /// double quotes
+        /// </summary>
+        private static string FixUnquotedEncodedString(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            return UnquotedEncodedString.Replace(value, (m) => string.Format("\"{0}\"", m.Groups[0].Value));
         }
 
         /// <summary>
