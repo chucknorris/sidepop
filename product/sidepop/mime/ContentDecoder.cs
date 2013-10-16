@@ -12,14 +12,34 @@ namespace sidepop.Mime
     /// <summary>
     /// Utility class that decodes string
     /// </summary>
-    public static class StringDecoder
+    public static class ContentDecoder
     {
-        
+        /// <summary>
+        /// Sets the decoded content stream by decoding the EncodedMessage 
+        /// and writing it to the entity content stream.
+        /// </summary>
+        public static byte[] DecodeBytes(MimeEntity entity)
+        {
+            switch (entity.ContentTransferEncoding)
+            {
+                case TransferEncoding.Base64:
+                    byte[] decodedBytes = Convert.FromBase64String(Encoding.ASCII.GetString(entity.ContentBytes));
+                    return decodedBytes;
+
+                case TransferEncoding.QuotedPrintable:
+                    return QuotedPrintableEncoding.Decode(entity.ContentLines);
+
+                case TransferEncoding.SevenBit:
+                default:
+                    return entity.ContentBytes;
+            }
+        }
+
         /// <summary>
         /// Decode the recieved content
         /// </summary>
         /// <returns></returns>
-        public static string DecodeContent(MimeEntity entity)
+        public static string DecodeString(MimeEntity entity)
         {
             switch (entity.ContentTransferEncoding)
             {
@@ -27,8 +47,7 @@ namespace sidepop.Mime
                     return DecodeBase64(entity.ContentLines, entity.ContentType.CharSet);
 
                 case TransferEncoding.QuotedPrintable:
-                    byte[] decodedBytes = QuotedPrintableEncoding.Decode(entity.ContentLines);
-                    return Decode(decodedBytes, entity.ContentType.CharSet);
+                    return DecodeQuotedPrintable(entity);
 
                 case TransferEncoding.SevenBit:
                 default:
@@ -46,26 +65,26 @@ namespace sidepop.Mime
 
                         return sb.ToString();
                     }
-                
+
             }
         }
 
         /// <summary>
         /// Decode the received single line using the correct decoder
         /// </summary>
-        private static string DecodeSingleLine(string line, TransferEncoding encoding, string charSet)
+        private static string DecodeSingleLineString(string line, TransferEncoding encoding, string charSet)
         {
             switch (encoding)
             {
                 case TransferEncoding.Base64:
                     {
                         byte[] decodedBytes = Encoding.ASCII.GetBytes(line);
-                        return DecodeBase64(new byte[][]{decodedBytes}, charSet);
+                        return DecodeBase64(new byte[][] { decodedBytes }, charSet);
                     }
                 case TransferEncoding.QuotedPrintable:
                     {
                         byte[] decodedBytes = QuotedPrintableEncoding.DecodeSingleLine(line);
-                        return Decode(decodedBytes, charSet);
+                        return DecodeBytesWithSpecificCharset(decodedBytes, charSet);
                     }
                 case TransferEncoding.SevenBit:
                 default:
@@ -76,15 +95,28 @@ namespace sidepop.Mime
         /// <summary>
         /// Decode the content into the given charset
         /// </summary>
-        private static string Decode(byte[] content, string charSet)
+        private static string DecodeQuotedPrintable(MimeEntity entity)
         {
-            if (charSet != null)
+            byte[] decodedBytes = QuotedPrintableEncoding.Decode(entity.ContentLines);
+
+            if (entity.ContentType.CharSet != null)
             {
-                return DecodeBytesWithSpecificCharset(content, charSet);
+                return DecodeBytesWithSpecificCharset(decodedBytes, entity.ContentType.CharSet);
             }
             else
             {
-                string decodedBytesString = Encoding.UTF8.GetString(content);
+                // by default, a text/plain ContentType without Specific Charset must default to ISO-8859-1.
+                // Other text/* ContentType without Specific charset must default to utf-8
+                // See http://tools.ietf.org/html/rfc6657#page-3
+
+                string encodingName = "utf-8";
+
+                if (entity.ContentType != null && string.Compare(entity.ContentType.MediaType, "text/plain", true) == 0)
+                {
+                    encodingName = "ISO-8859-1";
+                }
+
+                string decodedBytesString = Encoding.GetEncoding(encodingName).GetString(decodedBytes);
                 return decodedBytesString;
             }
         }
@@ -96,7 +128,7 @@ namespace sidepop.Mime
         {
             byte[] allBytes = content.SelectMany(b => b).ToArray();
             byte[] decodedBytes = Convert.FromBase64String(Encoding.ASCII.GetString(allBytes));
-                        
+
             if (charSet != null)
             {
                 return DecodeBytesWithSpecificCharset(decodedBytes, charSet);
@@ -206,7 +238,7 @@ namespace sidepop.Mime
                 encodedData = Regex.Replace(encodedData, "_", "=20");
             }
 
-            return DecodeSingleLine(encodedData, encoding, encodingName);
+            return DecodeSingleLineString(encodedData, encoding, encodingName);
         }
     }
 }

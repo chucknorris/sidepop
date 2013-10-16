@@ -257,12 +257,6 @@ namespace sidepop.Mime
 	    /// <value>The parent.</value>
 	    public MimeEntity Parent { get; set; }
 
-	    /// <summary>
-	    /// Gets or sets the content.
-	    /// </summary>
-	    /// <value>The content.</value>
-        public MemoryStream Content { get; internal set; }
-
         /// <summary>
         /// Gets or sets the raw content.
         /// </summary>
@@ -412,10 +406,10 @@ namespace sidepop.Mime
 		private void SetMessageBody(SidePOPMailMessage message, MimeEntity child)
 		{
 			Encoding encoding = child.GetEncoding();
-			message.Body = DecodeBytes(child.Content.ToArray(), encoding);
+
+            message.Body = ContentDecoder.DecodeString(child); ;
 			message.BodyEncoding = encoding;
-			message.IsBodyHtml = string.Equals(MediaTypes.TextHtml,
-			                                   child.ContentType.MediaType, StringComparison.InvariantCultureIgnoreCase);
+			message.IsBodyHtml = string.Equals(MediaTypes.TextHtml, child.ContentType.MediaType, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		/// <summary>
@@ -446,7 +440,8 @@ namespace sidepop.Mime
 		/// <returns></returns>
 		private AlternateView CreateAlternateView(MimeEntity view)
 		{
-			AlternateView alternateView = new AlternateView(view.Content, view.ContentType);
+            MemoryStream stream = new MemoryStream(ContentDecoder.DecodeBytes(view), false);
+            AlternateView alternateView = new AlternateView(stream, view.ContentType);
 			alternateView.TransferEncoding = view.ContentTransferEncoding;
 			alternateView.ContentId = TrimBrackets(view.ContentId);
 			return alternateView;
@@ -479,7 +474,8 @@ namespace sidepop.Mime
 		/// <returns></returns>
 		private Attachment CreateAttachment(MimeEntity entity)
 		{
-			Attachment attachment = new Attachment(entity.Content, entity.ContentType);
+            MemoryStream memoryStream = new MemoryStream(ContentDecoder.DecodeBytes(entity), false);
+            Attachment attachment = new Attachment(memoryStream, entity.ContentType);
 
 			if (entity.ContentDisposition != null)
 			{

@@ -142,7 +142,7 @@
     <Compile Include="Mime\MimeHeaders.cs" />
     <Compile Include="Mime\MimeReader.cs" />
     <Compile Include="Mime\QuotedPrintableEncoding.cs" />
-    <Compile Include="Mime\StringDecoder.cs" />
+    <Compile Include="Mime\ContentDecoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="message.events\MessageEventArgs.cs" />
     <Compile Include="message.events\MessageReceivedEvent.cs" />

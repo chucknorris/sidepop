@@ -257,37 +257,12 @@ namespace sidepop.Mime
 
                 ParseBody();
 
-                SetDecodedContentStream();
-
                 return _entity;
             }
             catch (Exception ex)
             {
                 MimeParserException exception = new MimeParserException(_rawBytes, "An error occured while creating the Mime Entity", _entity, ex);
                 throw exception;
-            }
-        }
-
-        /// <summary>
-        /// Sets the decoded content stream by decoding the EncodedMessage 
-        /// and writing it to the entity content stream.
-        /// </summary>
-        private void SetDecodedContentStream()
-        {
-            switch (_entity.ContentTransferEncoding)
-            {
-                case TransferEncoding.Base64:
-                    _entity.Content = new MemoryStream(_entity.ContentBytes, false);
-                    break;
-
-                case TransferEncoding.QuotedPrintable:
-                    _entity.Content = new MemoryStream(QuotedPrintableEncoding.Decode(_entity.ContentLines), false);
-                    break;
-
-                case TransferEncoding.SevenBit:
-                default:
-                    _entity.Content = new MemoryStream(_entity.ContentBytes.ToArray(), false);
-                    break;
             }
         }
 
