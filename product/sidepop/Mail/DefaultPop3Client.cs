@@ -435,7 +435,7 @@ namespace sidepop.Mail
         {
             byte[] rawBytes = Retrieve(item);
 
-            return MimeEntity.CreateFrom(rawBytes);
+            return MimeEntity.CreateFrom(rawBytes, false);
         }
 
         public SidePOPMailMessage Top(int messageId, int lineCount)

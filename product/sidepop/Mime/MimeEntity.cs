@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Text;
@@ -15,8 +16,11 @@ namespace sidepop.Mime
 	/// </summary>
 	public class MimeEntity
 	{
-        private MemoryStream _contentBytes;
-        private StringBuilder _decodedMessage;
+        /// <summary>
+        /// Not converted raw bytes
+        /// </summary>
+        private List<byte[]> _contentBytes;
+
 	    private readonly string _startBoundary;
 
         /// <summary>
@@ -33,8 +37,7 @@ namespace sidepop.Mime
 			Headers = new NameValueCollection();
 			ContentType = MimeReader.GetContentType(string.Empty);
 			Parent = null;
-            _contentBytes = new MemoryStream();
-            _decodedMessage = new StringBuilder();
+            _contentBytes = new List<byte[]>();
             RawContent = new MemoryStream();
 
             ContentTransferEncoding = System.Net.Mime.TransferEncoding.SevenBit; // RFC 2045 -- "Content-Transfer-Encoding: 7BIT" is assumed if the Content-Transfer-Encoding header field is not present.
@@ -45,7 +48,7 @@ namespace sidepop.Mime
         /// </summary>
         /// <param name="bytes">The bytes to read</param>
         /// <returns>The parsed MimeEntity</returns>
-        public static MimeEntity CreateFrom(byte[] bytes, bool throwOnInvalidContentType = false)
+        public static MimeEntity CreateFrom(byte[] bytes, bool throwOnInvalidContentType)
         {
             MimeReader reader = new MimeReader(bytes, throwOnInvalidContentType);
             MimeEntity entity = reader.CreateMimeEntity();           
@@ -70,13 +73,9 @@ namespace sidepop.Mime
         /// <summary>
         /// Append content to current content bytes and decoded message
         /// </summary>
-        public void AppendContent(byte[] lineBytes)
+        public void AppendLineContent(byte[] lineBytes)
         {
-            _contentBytes.Write(lineBytes, 0, lineBytes.Length);
-
-            string decodedLine = ConvertBytesToStringWithCurrentContentTypeCharSet(lineBytes);
-
-            _decodedMessage.Append(string.Concat(decodedLine, Pop3Commands.Crlf));
+            _contentBytes.Add(lineBytes);
         }
 
 		/// <summary>
@@ -85,22 +84,16 @@ namespace sidepop.Mime
         /// <value>The ContentBytes.</value>
         public byte[] ContentBytes
 		{
-            get { return _contentBytes.ToArray(); }
+            get { return _contentBytes.SelectMany(b => b).ToArray(); }
         }
 
         /// <summary>
-        /// Gets the decoded message.
+        /// Gets the content lines. Those are the raw bytes as they were received
         /// </summary>
-        /// <value>The decoded message.</value>
-        public string DecodedMessage
+        public byte[][] ContentLines
         {
-            get 
-            {
-                return _decodedMessage.ToString(); 
-            }
+            get { return _contentBytes.ToArray(); }
         }
-
-
 
         /// <summary>
         /// Returns the encoding to use for the specified charset
@@ -132,15 +125,6 @@ namespace sidepop.Mime
                 //Ignore unknown encodings
                 return Encoding.ASCII;
             }
-        }
-
-
-        /// <summary>
-        /// Converts byte using the CharSet specified by the current Content-Type / charset header
-        /// </summary>
-        private string ConvertBytesToStringWithCurrentContentTypeCharSet(byte[] lineBytes)
-        {
-            return GetEncoding(ContentType.CharSet).GetString(lineBytes);
         }
 
 	    /// <summary>

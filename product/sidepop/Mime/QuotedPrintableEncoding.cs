@@ -17,45 +17,56 @@ namespace sidepop.Mime
         private const string Equal = "=";
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static byte[] DecodeSingleLine(string content)
+        {
+            byte[] lineBytes = Encoding.Default.GetBytes(content);
+
+            return Decode(new byte[][] { lineBytes });
+        }
+
+        /// <summary>
         /// A quoted printable string is composed only of the ASCII characters 0 to 9, A to F and =.
         /// But in fact it represents an array of bytes from the range 0 to 255. These bytes will later
         /// be converted to a string using the character set specified in the Content-Type header.
         /// </summary>
-        public static byte[] Decode(string contents)
+        public static byte[] Decode(byte[][] contentLines)
         {
-            if (contents == null)
+            if (contentLines == null)
             {
                 throw new ArgumentNullException("contents");
             }
 
             List<byte> decodedBytes = new List<byte>();
 
-            using (StringReader reader = new StringReader(contents))
-            {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+            
+            for (int i = 0; i < contentLines.Length; i++)
+			{
+                string line = Encoding.Default.GetString(contentLines[i]);
+
+                /*remove trailing line whitespace that may have
+                    been added by a mail transfer agent per rule
+                    #3 of the Quoted Printable section of RFC 1521.*/
+                line.TrimEnd();
+
+                if (line.EndsWith(Equal))
                 {
-                    /*remove trailing line whitespace that may have
-                        been added by a mail transfer agent per rule
-                        #3 of the Quoted Printable section of RFC 1521.*/
-                    line.TrimEnd();
+                    //Don't include the Equal character itself because it is not part of the line content
+                    line = line.Substring(0, line.Length - 1);
 
-                    if (line.EndsWith(Equal))
+                    decodedBytes.AddRange(DecodeLine(line));
+                } //handle soft line breaks for lines that end with an "="
+                else
+                {
+                    decodedBytes.AddRange(DecodeLine(line));
+
+                    bool isLastLine = (i == contentLines.Length - 1);
+                    if (!isLastLine)
                     {
-                        //Don't include the Equal character itself because it is not part of the line content
-                        line = line.Substring(0, line.Length - 1);
-
-                        decodedBytes.AddRange(DecodeLine(line));
-                    } //handle soft line breaks for lines that end with an "="
-                    else
-                    {
-                        decodedBytes.AddRange(DecodeLine(line));
-
-                        //Avoid extra line break on last line of the message
-                        if (reader.Peek() != -1)
-                        {
-                            decodedBytes.AddRange(DecodeLine(Environment.NewLine));
-                        }
+                        decodedBytes.AddRange(DecodeLine(Environment.NewLine));
                     }
                 }
             }

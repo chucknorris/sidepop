@@ -277,13 +277,11 @@ namespace sidepop.Mime
             switch (_entity.ContentTransferEncoding)
             {
                 case TransferEncoding.Base64:
-                    string base64String = DefaultEncoding.GetString(_entity.ContentBytes.ToArray());
-                    _entity.Content = new MemoryStream(Convert.FromBase64String(base64String), false);
+                    _entity.Content = new MemoryStream(_entity.ContentBytes, false);
                     break;
 
                 case TransferEncoding.QuotedPrintable:
-                    string qEncodedString = DefaultEncoding.GetString(_entity.ContentBytes.ToArray());
-                    _entity.Content = new MemoryStream(QuotedPrintableEncoding.Decode(qEncodedString), false);
+                    _entity.Content = new MemoryStream(QuotedPrintableEncoding.Decode(_entity.ContentLines), false);
                     break;
 
                 case TransferEncoding.SevenBit:
@@ -414,7 +412,7 @@ namespace sidepop.Mime
         {
             byte[] lineBytes = Dequeue();
 
-            _entity.AppendContent(lineBytes);
+            _entity.AppendLineContent(lineBytes);
         }
 
         /// <summary>

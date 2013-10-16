@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -13,22 +14,96 @@ namespace sidepop.Mime
     /// </summary>
     public static class StringDecoder
     {
+        
         /// <summary>
-        /// Decodes the specified value.
+        /// Decode the recieved content
         /// </summary>
-        public static string Decode(string value, TransferEncoding transferEncoding, string charSet)
+        /// <returns></returns>
+        public static string DecodeContent(MimeEntity entity)
         {
-            switch (transferEncoding)
+            switch (entity.ContentTransferEncoding)
             {
                 case TransferEncoding.Base64:
-                    return DecodeBase64String(value, charSet);
+                    return DecodeBase64(entity.ContentLines, entity.ContentType.CharSet);
 
                 case TransferEncoding.QuotedPrintable:
-                    return DecodeQuotedPrintableString(value, charSet);
+                    byte[] decodedBytes = QuotedPrintableEncoding.Decode(entity.ContentLines);
+                    return Decode(decodedBytes, entity.ContentType.CharSet);
 
                 case TransferEncoding.SevenBit:
                 default:
-                    return value;
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        foreach (byte[] line in entity.ContentLines)
+                        {
+                            if (sb.Length > 0)
+                            {
+                                sb.AppendLine();
+                            }
+
+                            sb.Append(DecodeBytesWithSpecificCharset(line, entity.ContentType.CharSet));
+                        }
+
+                        return sb.ToString();
+                    }
+                
+            }
+        }
+
+        /// <summary>
+        /// Decode the received single line using the correct decoder
+        /// </summary>
+        private static string DecodeSingleLine(string line, TransferEncoding encoding, string charSet)
+        {
+            switch (encoding)
+            {
+                case TransferEncoding.Base64:
+                    {
+                        byte[] decodedBytes = Encoding.ASCII.GetBytes(line);
+                        return DecodeBase64(new byte[][]{decodedBytes}, charSet);
+                    }
+                case TransferEncoding.QuotedPrintable:
+                    {
+                        byte[] decodedBytes = QuotedPrintableEncoding.DecodeSingleLine(line);
+                        return Decode(decodedBytes, charSet);
+                    }
+                case TransferEncoding.SevenBit:
+                default:
+                    return line;
+            }
+        }
+
+        /// <summary>
+        /// Decode the content into the given charset
+        /// </summary>
+        private static string Decode(byte[] content, string charSet)
+        {
+            if (charSet != null)
+            {
+                return DecodeBytesWithSpecificCharset(content, charSet);
+            }
+            else
+            {
+                string decodedBytesString = Encoding.UTF8.GetString(content);
+                return decodedBytesString;
+            }
+        }
+
+        /// <summary>
+        /// Decodes a Base64 string and returns a string intepreted with the specified charset.
+        /// </summary>
+        private static string DecodeBase64(byte[][] content, string charSet)
+        {
+            byte[] allBytes = content.SelectMany(b => b).ToArray();
+            byte[] decodedBytes = Convert.FromBase64String(Encoding.ASCII.GetString(allBytes));
+                        
+            if (charSet != null)
+            {
+                return DecodeBytesWithSpecificCharset(decodedBytes, charSet);
+            }
+            else
+            {
+                return ByteArrayToString(decodedBytes);
             }
         }
 
@@ -50,44 +125,6 @@ namespace sidepop.Mime
         {
             string decoded = new string(encoded.Select(b => (char)b).ToArray());
             return decoded;
-        }
-
-        /// <summary>
-        /// Decodes a Quoted Printable string and returns a string interpreted with the specified charset.
-        /// 
-        /// After the string is decoded by QuotedPrintableEncoding, we need to cast the characters into bytes in order to avoid all encoding.
-        /// When the byte array is calculated, we use Encoding.GetString which will interpret the byte array correctly.
-        /// </summary>
-        private static string DecodeQuotedPrintableString(string encodedMessage, string charSet)
-        {
-            byte[] decodedBytes = QuotedPrintableEncoding.Decode(encodedMessage);
-
-            if (charSet != null)
-            {
-                return DecodeBytesWithSpecificCharset(decodedBytes, charSet);
-            }
-            else
-            {
-                string decodedBytesString = Encoding.UTF8.GetString(decodedBytes);
-                return decodedBytesString;
-            }
-        }
-
-        /// <summary>
-        /// Decodes a Base64 string and returns a string intepreted with the specified charset.
-        /// </summary>
-        private static string DecodeBase64String(string encodedMessage, string charSet)
-        {
-            byte[] decodedBytes = Convert.FromBase64String(encodedMessage);
-
-            if (charSet != null)
-            {
-                return DecodeBytesWithSpecificCharset(decodedBytes, charSet);
-            }
-            else
-            {
-                return ByteArrayToString(decodedBytes);
-            }
         }
 
         /// <summary>
@@ -169,7 +206,7 @@ namespace sidepop.Mime
                 encodedData = Regex.Replace(encodedData, "_", "=20");
             }
 
-            return Decode(encodedData, encoding, encodingName);
+            return DecodeSingleLine(encodedData, encoding, encodingName);
         }
     }
 }
