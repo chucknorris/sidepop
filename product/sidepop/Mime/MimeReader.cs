@@ -20,7 +20,7 @@ namespace sidepop.Mime
     {
         private static readonly char[] HeaderWhitespaceChars = new[] { ' ', '\t' };
         private static Encoding DefaultEncoding;
-        private static Regex UnquotedEncodedString = new Regex("(?<!\")=\\?([^\\?]+)\\?([BbQq])\\?([^\\?]+)\\?=(?!\")", RegexOptions.Compiled);
+        private static Regex UnquotedEncodedString = new Regex("(\"|)(=\\?([^\\?]+)\\?([BbQq])\\?([^\\?]+)\\?=)+(\"|)", RegexOptions.Compiled);
         private readonly MimeEntity _entity;
         private readonly Queue<byte[]> _lines;
         private byte[] _rawBytes;
@@ -158,7 +158,8 @@ namespace sidepop.Mime
                 //previous line.
                 if (line.StartsWith(" ") || line.StartsWith(Convert.ToString('\t')))
                 {
-                    _entity.Headers[lastHeader] = string.Concat(_entity.Headers[lastHeader], line);
+                    string headerNextLine = line.Substring(1);
+                    _entity.Headers[lastHeader] = string.Concat(_entity.Headers[lastHeader], headerNextLine);
                     continue;
                 }
 
@@ -452,16 +453,23 @@ namespace sidepop.Mime
         }
 
         /// <summary>
-        /// Get the attachments 
+        /// Get the content disposition parsed from the specified string
         /// </summary>
-        /// <param name="contentDisposition">The disposition text</param>
-        /// <returns></returns>
         public static ContentDisposition GetContentDisposition(string contentDisposition)
         {
             string epuratedContentDisposition = StripInvalidDateTime(contentDisposition);
-            epuratedContentDisposition = FixUnquotedEncodedString(epuratedContentDisposition);
 
-            ContentDisposition result = new ContentDisposition(epuratedContentDisposition);
+            ContentDisposition result;
+            try
+            {
+                result = new ContentDisposition(epuratedContentDisposition);
+            }
+            catch
+            {
+                epuratedContentDisposition = FixUnquotedEncodedString(epuratedContentDisposition);
+                result = new ContentDisposition(epuratedContentDisposition);
+            }
+
             return result;
         }
 
@@ -512,7 +520,21 @@ namespace sidepop.Mime
                 return value;
             }
 
-            return UnquotedEncodedString.Replace(value, (m) => string.Format("\"{0}\"", m.Groups[0].Value));
+            return UnquotedEncodedString.Replace(value, (m) => 
+                {
+                    string fullMatch = m.Groups[0].Value;
+                    if( !fullMatch.StartsWith("\"" ) )
+                    {
+                        fullMatch = "\"" + fullMatch;
+                    }
+
+                    if( !fullMatch.EndsWith("\"" ) )
+                    {
+                        fullMatch = fullMatch + "\"";
+                    }
+
+                    return fullMatch;
+                });
         }
 
         /// <summary>
