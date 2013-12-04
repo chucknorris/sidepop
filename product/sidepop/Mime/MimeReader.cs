@@ -158,7 +158,7 @@ namespace sidepop.Mime
                 //previous line.
                 if (line.StartsWith(" ") || line.StartsWith(Convert.ToString('\t')))
                 {
-                    string headerNextLine = line.Substring(1);
+                    string headerNextLine = line;
                     _entity.Headers[lastHeader] = string.Concat(_entity.Headers[lastHeader], headerNextLine);
                     continue;
                 }
