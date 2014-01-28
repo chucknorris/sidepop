@@ -101,6 +101,8 @@
     <Compile Include="infrastructure\logging\LogFactory.cs" />
     <Compile Include="infrastructure\logging\Logger.cs" />
     <Compile Include="Mail\LastBytesTracker.cs" />
+    <Compile Include="Mime\EncodedWord.cs" />
+    <Compile Include="Mime\EncodedWords.cs" />
     <Compile Include="Mime\MimeParserException.cs" />
     <Compile Include="infrastructure\timers\DefaultTimer.cs" />
     <Compile Include="infrastructure\timers\ITimer.cs" />

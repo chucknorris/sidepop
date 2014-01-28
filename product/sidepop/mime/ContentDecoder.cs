@@ -72,7 +72,7 @@ namespace sidepop.Mime
         /// <summary>
         /// Decode the received single line using the correct decoder
         /// </summary>
-        private static string DecodeSingleLineString(string line, TransferEncoding encoding, string charSet)
+        internal static string DecodeSingleLineString(string line, TransferEncoding encoding, string charSet)
         {
             switch (encoding)
             {
@@ -188,57 +188,12 @@ namespace sidepop.Mime
         }
 
         /// <summary>
-        /// Regex for extracting text encoded in QuetedPrintable or Base64 string such as: =?iso-8859-1?Q?Fr=E9d=E9ric_Vandal?=
-        /// </summary>
-        private const string _encodedWordsPattern = "\\s*=\\?([^\\?]+)\\?([BbQq])\\?([^\\?]+)\\?=";
-
-        /// <summary>
         /// replaces all the occurences of : =?charset?Q|B?string?= into the specified value.
         /// </summary>
         public static string DecodeEncodedWords(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
-            return Regex.Replace(value, _encodedWordsPattern, DecodeEncodedWord);
-        }
-
-        /// <summary>
-        /// For a match, 
-        /// 
-        /// 1-extracts the 3 parts
-        /// 2-decodes the third part using the specified encoding in second part (either B for Base64 or Q for QuotedPrintable)
-        ///   and interpret the result using the specified charset in first part.
-        /// 
-        /// </summary>
-        private static string DecodeEncodedWord(Match t)
-        {
-            // t is in the following format:
-            //     =?xxxx?y?zzzzzzzzzz?=
-            // where xxxx is character set name, like UTF-8, ISO-8859-1,
-            // etc.,
-            // y is one of B or Q which specifies encoding method,
-            // zzzzzzzzz is an encoded data.
-
-            string encodingName = t.Groups[1].Value;   // e.g. ISO-8859-1, ISO-2022-JP, UTF-8, etc.
-            string encodingType = t.Groups[2].Value;   // B or Q (case insensitive)
-            string encodedData = t.Groups[3].Value;    // encoded data
-
-            TransferEncoding encoding;
-            if (encodingType.ToUpper() == "B")
-            {
-                encoding = TransferEncoding.Base64;
-            }
-            else
-            {
-                // replace "_" by "=20"
-                encoding = TransferEncoding.QuotedPrintable;
-                encodedData = Regex.Replace(encodedData, "_", "=20");
-            }
-
-            return DecodeSingleLineString(encodedData, encoding, encodingName);
+        {           
+            EncodedWords encodedWords = new EncodedWords(value);
+            return encodedWords.Decoded;
         }
     }
 }
