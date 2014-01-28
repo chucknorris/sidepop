@@ -18,8 +18,9 @@ namespace sidepop.Mime
     /// </summary>
     public class MimeReader
     {
+        public static Encoding DefaultEncoding { get; private set; }
+
         private static readonly char[] HeaderWhitespaceChars = new[] { ' ', '\t' };
-        private static Encoding DefaultEncoding;
         private static Regex UnquotedEncodedString = new Regex("(\"|)(=\\?([^\\?]+)\\?([BbQq])\\?([^\\?]+)\\?=)+(\"|)", RegexOptions.Compiled);
         private readonly MimeEntity _entity;
         private readonly Queue<byte[]> _lines;
@@ -143,6 +144,7 @@ namespace sidepop.Mime
         /// </summary>
         private int ParseHeaders()
         {
+            StringBuilder allHeaders = new StringBuilder();
             string lastHeader = string.Empty;
             string line = string.Empty;
             byte[] lineBytes = null;
@@ -153,6 +155,7 @@ namespace sidepop.Mime
                 lineBytes = Dequeue();
 
                 line = ConvertBytesToStringWithDefaultEncoding(lineBytes);
+                allHeaders.AppendLine(line);
 
                 //if a header line starts with a space or tab then it is a continuation of the
                 //previous line.
@@ -193,6 +196,8 @@ namespace sidepop.Mime
             {
                 Dequeue();
             } //remove closing header CRLF.
+
+            _entity.RawHeadersString = allHeaders.ToString();
 
             return _entity.Headers.Count;
         }

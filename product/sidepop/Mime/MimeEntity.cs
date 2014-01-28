@@ -28,6 +28,11 @@ namespace sidepop.Mime
         /// </summary>
         public byte[] RawBytes { get; set; }
 
+        /// <summary>
+        /// Exposes a string which represent the raw headers
+        /// </summary>
+        public string RawHeadersString { get; set; }
+
 	    /// <summary>
 		/// Initializes a new instance of the <see cref="MimeEntity"/> class.
 		/// </summary>
