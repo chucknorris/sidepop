@@ -66,7 +66,9 @@ namespace sidepop.Mail.Responses
 
 				if (hostMessage == null)
 				{
-					return null;
+                    ArgumentException exception = new ArgumentException("responseContents");
+                    exception.Data["responseContents"] = responseContents;
+                    throw exception;
 				}
 
 				bool success = hostMessage.StartsWith(Pop3Responses.Ok);

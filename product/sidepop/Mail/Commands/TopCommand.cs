@@ -66,9 +66,8 @@ namespace sidepop.Mail.Commands
 				return null;
 			}
 
-			string[] messageLines = GetResponseLines(StripPop3HostMessage(buffer, response.HostMessage));
-
-			return new RetrieveResponse(response, messageLines);
+            MemoryStream responseStream = StripPop3HostMessage(buffer, response.HostMessage, ".");
+			return new RetrieveResponse(response, responseStream.ToArray());
 		}
 	}
 }

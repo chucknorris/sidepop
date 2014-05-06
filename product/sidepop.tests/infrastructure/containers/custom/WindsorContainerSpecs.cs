@@ -1,18 +1,19 @@
 namespace sidepop.tests.infrastructure.containers.custom
 {
     using System;
-    using bdddoc.core;
-    using Castle.MicroKernel;
-    using Castle.Windsor;
-    using developwithpassion.bdd.contexts;
-    using developwithpassion.bdd.mbunit;
-    using developwithpassion.bdd.mbunit.standard;
-    using developwithpassion.bdd.mbunit.standard.observations;
-    using Rhino.Mocks;
-    using sidepop.infrastructure.containers;
-    using sidepop.infrastructure.logging;
-    using sidepop.infrastructure.logging.custom;
-    using WindsorContainer=sidepop.infrastructure.containers.custom.WindsorContainer;
+using bdddoc.core;
+using Castle.MicroKernel;
+using Castle.MicroKernel.Registration;
+using Castle.Windsor;
+using developwithpassion.bdd.contexts;
+using developwithpassion.bdd.mbunit;
+using developwithpassion.bdd.mbunit.standard;
+using developwithpassion.bdd.mbunit.standard.observations;
+using Rhino.Mocks;
+using sidepop.infrastructure.containers;
+using sidepop.infrastructure.logging;
+using sidepop.infrastructure.logging.custom;
+using WindsorContainer=sidepop.infrastructure.containers.custom.WindsorContainer;
 
     public class WindsorContainerSpecs
     {
@@ -78,9 +79,7 @@ namespace sidepop.tests.infrastructure.containers.custom
         {
             private static LogFactory result;
 
-            private context c =
-                () => { the_container.AddComponent("h", typeof (LogFactory), typeof (Log4NetLogFactory)); };
-
+            private context c = () => { the_container.Register(Component.For<LogFactory>().ImplementedBy<Log4NetLogFactory>().Named("h"));};
             private because b = () => { result = sut.Resolve<LogFactory>(); };
 
             [Observation]

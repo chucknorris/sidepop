@@ -17,6 +17,7 @@ namespace sidepop.Mime
 		public static readonly string TextPlain;
 		public static readonly string TextRich;
 		public static readonly string TextXml;
+		public static readonly string[] TextMediaTypes;
 
 		static MediaTypes()
 		{
@@ -34,6 +35,14 @@ namespace sidepop.Mime
 			TextHtml = MediaTypeNames.Text.Html;
 			TextRich = MediaTypeNames.Text.RichText;
 			TextXml = MediaTypeNames.Text.Xml;
+
+			TextMediaTypes = new string[]
+			{
+				MediaTypes.TextHtml,
+				MediaTypes.TextPlain,
+				MediaTypes.TextRich,
+				MediaTypes.TextXml
+			};
 		}
 	}
 }

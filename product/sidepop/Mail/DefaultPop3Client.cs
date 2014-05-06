@@ -10,6 +10,7 @@ using sidepop.Mime;
 namespace sidepop.Mail
 {
     using infrastructure.logging;
+    using System.Text;
 
     /// <summary>
     /// The DefaultPop3Client class provides a wrapper for the Pop3 commands
@@ -208,7 +209,8 @@ namespace sidepop.Mail
 
             string errorMessage = string.IsNullOrEmpty(error) ? response.HostMessage : string.Concat(error, ": ", error);
 
-            throw new Pop3Exception(errorMessage);
+            string responseContent = Encoding.ASCII.GetString( response.ResponseContents );
+            throw new Pop3Exception(errorMessage + "\r\n\t" + responseContent.Replace("\n", "\n\t"));
         }
 
         /// <summary>
@@ -403,7 +405,7 @@ namespace sidepop.Mail
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns>A MimeEntity for the requested Pop3 Mail Item.</returns>
-        public MimeEntity RetrieveMimeEntity(Pop3ListItemResult item)
+        public byte[] Retrieve(Pop3ListItemResult item)
         {
             if (item == null)
             {
@@ -421,8 +423,19 @@ namespace sidepop.Mail
                 response = ExecuteCommand<RetrieveResponse, RetrieveCommand>(command);
             }
 
-            MimeReader reader = new MimeReader(response.MessageLines);
-            return reader.CreateMimeEntity();
+            return response.RawBytes;
+        }
+
+        /// <summary>
+        /// Retrieves the specified message.
+        /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns>A MimeEntity for the requested Pop3 Mail Item.</returns>
+        public MimeEntity RetrieveMimeEntity(Pop3ListItemResult item)
+        {
+            byte[] rawBytes = Retrieve(item);
+
+            return MimeEntity.CreateFrom(rawBytes, false);
         }
 
         public SidePOPMailMessage Top(int messageId, int lineCount)
@@ -443,8 +456,9 @@ namespace sidepop.Mail
                 response = ExecuteCommand<RetrieveResponse, TopCommand>(command);
             }
 
-            MimeReader reader = new MimeReader(response.MessageLines);
+            MimeReader reader = new MimeReader(response.RawBytes);
             MimeEntity entity = reader.CreateMimeEntity();
+            entity.RawBytes = response.RawBytes;
             SidePOPMailMessage message = entity.ToMailMessageEx();
             message.Octets = response.Octets;
             message.MessageNumber = messageId;

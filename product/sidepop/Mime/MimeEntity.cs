@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Text;
 using sidepop.Mail;
+using sidepop.Mail.Commands;
 
 namespace sidepop.Mime
 {
@@ -14,8 +16,22 @@ namespace sidepop.Mime
 	/// </summary>
 	public class MimeEntity
 	{
-	    private readonly StringBuilder _encodedMessage;
+        /// <summary>
+        /// Not converted raw bytes
+        /// </summary>
+        private List<byte[]> _contentBytes;
+
 	    private readonly string _startBoundary;
+
+        /// <summary>
+        /// Exposes raw bytes for the mime part and its children
+        /// </summary>
+        public byte[] RawBytes { get; set; }
+
+        /// <summary>
+        /// Exposes a string which represent the raw headers
+        /// </summary>
+        public string RawHeadersString { get; set; }
 
 	    /// <summary>
 		/// Initializes a new instance of the <see cref="MimeEntity"/> class.
@@ -26,8 +42,23 @@ namespace sidepop.Mime
 			Headers = new NameValueCollection();
 			ContentType = MimeReader.GetContentType(string.Empty);
 			Parent = null;
-			_encodedMessage = new StringBuilder();
+            _contentBytes = new List<byte[]>();
+            RawContent = new MemoryStream();
+
+            ContentTransferEncoding = System.Net.Mime.TransferEncoding.SevenBit; // RFC 2045 -- "Content-Transfer-Encoding: 7BIT" is assumed if the Content-Transfer-Encoding header field is not present.
 		}
+
+        /// <summary>
+        /// Create MimeEntity from the given bytes
+        /// </summary>
+        /// <param name="bytes">The bytes to read</param>
+        /// <returns>The parsed MimeEntity</returns>
+        public static MimeEntity CreateFrom(byte[] bytes, bool throwOnInvalidContentType)
+        {
+            MimeReader reader = new MimeReader(bytes, throwOnInvalidContentType);
+            MimeEntity entity = reader.CreateMimeEntity();           
+            return entity;
+        }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MimeEntity"/> class.
@@ -44,14 +75,62 @@ namespace sidepop.Mime
 			_startBoundary = parent.StartBoundary;
 		}
 
+        /// <summary>
+        /// Append content to current content bytes and decoded message
+        /// </summary>
+        public void AppendLineContent(byte[] lineBytes)
+        {
+            _contentBytes.Add(lineBytes);
+        }
+
 		/// <summary>
-		/// Gets the encoded message.
+        /// Gets the ContentBytes
 		/// </summary>
-		/// <value>The encoded message.</value>
-		public StringBuilder EncodedMessage
+        /// <value>The ContentBytes.</value>
+        public byte[] ContentBytes
 		{
-			get { return _encodedMessage; }
-		}
+            get { return _contentBytes.SelectMany(b => b).ToArray(); }
+        }
+
+        /// <summary>
+        /// Gets the content lines. Those are the raw bytes as they were received
+        /// </summary>
+        public byte[][] ContentLines
+        {
+            get { return _contentBytes.ToArray(); }
+        }
+
+        /// <summary>
+        /// Returns the encoding to use for the specified charset
+        /// </summary>
+        public static Encoding GetEncoding(string charset)
+        {
+            //In this method,, We should eventually use an external library for detecting encoding in case Encoding.GetEncoding fails
+            //This would mean that we have to provide the byte[] in this method.
+            //Here is an example of a library we could use:
+            //Ude is a C# port of Mozilla Universal Charset Detector. http://code.google.com/p/ude/
+
+
+            if (string.IsNullOrEmpty(charset))
+            {
+                return Encoding.ASCII;
+            }
+
+            if (charset.ToUpper().Contains("UNKNOWN"))
+            {
+                return Encoding.UTF8;
+            }
+
+            try
+            {
+                return Encoding.GetEncoding(charset);
+            }
+            catch
+            {
+                //Ignore unknown encodings
+                return Encoding.ASCII;
+            }
+        }
 
 	    /// <summary>
 	    /// Gets the children.
@@ -106,6 +185,23 @@ namespace sidepop.Mime
 	    /// </summary>
 	    /// <value>The content disposition.</value>
 	    public ContentDisposition ContentDisposition { get; set; }
+
+	    /// <summary>
+	    /// Gets the name of the MIME part.
+	    /// </summary>
+	    /// <value>The name of the MIME part.</value>
+	    public string Name
+	    {
+	        get
+	        {
+	            if (ContentDisposition != null && !String.IsNullOrEmpty(ContentDisposition.FileName))
+	            {
+	                return ContentDisposition.FileName;
+	            }
+	
+	            return ContentType.Name;
+	        }
+	    }
 
 	    /// <summary>
 	    /// Gets or sets the transfer encoding.
@@ -166,11 +262,11 @@ namespace sidepop.Mime
 	    /// <value>The parent.</value>
 	    public MimeEntity Parent { get; set; }
 
-	    /// <summary>
-	    /// Gets or sets the content.
-	    /// </summary>
-	    /// <value>The content.</value>
-	    public MemoryStream Content { get; internal set; }
+        /// <summary>
+        /// Gets or sets the raw content.
+        /// </summary>
+        /// <value>The raw content.</value>
+        public MemoryStream RawContent { get; internal set; }
         
 	    /// <summary>
 		/// Sets the type of the content.
@@ -255,21 +351,7 @@ namespace sidepop.Mime
 		/// <param name="contentType">Type of the content.</param>
 		public Encoding GetEncoding()
 		{
-			if (string.IsNullOrEmpty(ContentType.CharSet))
-			{
-				return Encoding.ASCII;
-			}
-			else
-			{
-				try
-				{
-					return Encoding.GetEncoding(ContentType.CharSet);
-				}
-				catch (ArgumentException)
-				{
-					return Encoding.ASCII;
-				}
-			}
+			return GetEncoding(ContentType.CharSet);
 		}
 
 		/// <summary>
@@ -298,8 +380,10 @@ namespace sidepop.Mime
 				} //add the alternative views.
 				else if (string.Equals(child.ContentType.MediaType, MediaTypes.MessageRfc822,
 				                       StringComparison.InvariantCultureIgnoreCase)
-				         &&
-				         string.Equals(child.ContentDisposition.DispositionType, DispositionTypeNames.Attachment,
+                         &&
+                            child.ContentDisposition != null // RFC 2183 specifies the 'Content-Disposition' header field, which is optional and valid for any MIME entity ("message" or "body part")
+                         && 
+                            string.Equals(child.ContentDisposition.DispositionType, DispositionTypeNames.Attachment,
 				                       StringComparison.InvariantCultureIgnoreCase))
 				{
 					message.Children.Add(ToMailMessageEx(child));
@@ -327,10 +411,10 @@ namespace sidepop.Mime
 		private void SetMessageBody(SidePOPMailMessage message, MimeEntity child)
 		{
 			Encoding encoding = child.GetEncoding();
-			message.Body = DecodeBytes(child.Content.ToArray(), encoding);
+
+            message.Body = ContentDecoder.DecodeString(child); ;
 			message.BodyEncoding = encoding;
-			message.IsBodyHtml = string.Equals(MediaTypes.TextHtml,
-			                                   child.ContentType.MediaType, StringComparison.InvariantCultureIgnoreCase);
+			message.IsBodyHtml = string.Equals(MediaTypes.TextHtml, child.ContentType.MediaType, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		/// <summary>
@@ -361,7 +445,8 @@ namespace sidepop.Mime
 		/// <returns></returns>
 		private AlternateView CreateAlternateView(MimeEntity view)
 		{
-			AlternateView alternateView = new AlternateView(view.Content, view.ContentType);
+            MemoryStream stream = new MemoryStream(ContentDecoder.DecodeBytes(view), false);
+            AlternateView alternateView = new AlternateView(stream, view.ContentType);
 			alternateView.TransferEncoding = view.ContentTransferEncoding;
 			alternateView.ContentId = TrimBrackets(view.ContentId);
 			return alternateView;
@@ -394,13 +479,25 @@ namespace sidepop.Mime
 		/// <returns></returns>
 		private Attachment CreateAttachment(MimeEntity entity)
 		{
-			Attachment attachment = new Attachment(entity.Content, entity.ContentType);
+            MemoryStream memoryStream = new MemoryStream(ContentDecoder.DecodeBytes(entity), false);
+            Attachment attachment = new Attachment(memoryStream, entity.ContentType);
 
 			if (entity.ContentDisposition != null)
 			{
 				attachment.ContentDisposition.Parameters.Clear();
 				foreach (string key in entity.ContentDisposition.Parameters.Keys)
 				{
+                    //Skip values that will be strongly typed copied after this loop: it happens that date string
+                    //will not be parsed correctly when going through Parameters.Add but are already parsed into entity.ContentDisposition
+                    if (key == "creation-date" ||
+                        key == "modification-date" ||
+                        key == "read-date" ||
+                        key == "size" ||
+                        key == "filename")
+                    {
+                        continue;
+                    }
+
 					attachment.ContentDisposition.Parameters.Add(key, entity.ContentDisposition.Parameters[key]);
 				}
 
@@ -422,5 +519,5 @@ namespace sidepop.Mime
 
 			return attachment;
 		}
-	}
+    }
 }

@@ -106,11 +106,9 @@
 
   <target name="build">
     <call target="get_revision" />
-    <call target="get_build_number" />
     <call target="get_drop_directory" />
 
     <nant buildfile="${dirs.current}${path.separator}policyChecks.step" inheritall="true" />
-    <nant buildfile="${dirs.current}${path.separator}versionBuilder.step" inheritall="true" />
     <nant buildfile="${dirs.current}${path.separator}generateBuildInfo.step" inheritall="true" />
     <nant buildfile="${dirs.current}${path.separator}compile.step" inheritall="true" />
     <nant buildfile="${dirs.current}${path.separator}environmentBuilder.step" inheritall="true" />
@@ -136,12 +134,6 @@
     <property name="version.hash" value="${environment::get-variable('uc.app.revision.hash')}" if="${environment::variable-exists('uc.app.revision.hash')}" />
     <property name="version.hash" value="${version.revision}" if="${version.hash == '0'}" />
     <echo message="Using revision number: ${version.revision} and hash: ${version.hash}." />
-  </target>
-
-  <target name="get_build_number">
-    <property name="version.build" value="${environment::get-variable('CCNetNumericLabel')}" if="${environment::variable-exists('CCNetNumericLabel')}" />
-    <property name="version.build" value="${environment::get-variable('BUILD_NUMBER')}" if="${environment::variable-exists('BUILD_NUMBER')}" />
-    <echo message="Using build number ${version.build}." />
   </target>
 
   <target name="get_drop_directory">

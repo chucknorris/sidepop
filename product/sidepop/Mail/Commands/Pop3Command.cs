@@ -19,12 +19,13 @@ namespace sidepop.Mail.Commands
     /// <typeparam name="T"></typeparam>
     internal abstract class Pop3Command<T> : Command, IDisposable where T : Pop3Response
     {
-        private const int BufferSize = 1024;
+        private const int BufferSize = 10 * 1024;
         private const string MessageTerminator = ".";
         private const string MultilineMessageTerminator = "\r\n.\r\n";
         private readonly byte[] _buffer;
         private readonly ManualResetEvent _manualResetEvent;
         private readonly MemoryStream _responseContents;
+        private LastBytesTracker _lastBytesTracker;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Pop3Command"/> class.
@@ -42,6 +43,7 @@ namespace sidepop.Mail.Commands
             _manualResetEvent = new ManualResetEvent(false);
             _buffer = new byte[BufferSize];
             _responseContents = new MemoryStream();
+            _lastBytesTracker = new LastBytesTracker(5);
             NetworkStream = stream;
             IsMultiline = isMultiline;
             ValidExecuteState = validExecuteState;
@@ -197,10 +199,11 @@ namespace sidepop.Mail.Commands
         /// <returns></returns>
         private string WriteReceivedBytesToBuffer(int bytesReceived)
         {
+            _lastBytesTracker.AddBytes(_buffer, bytesReceived);
+
             _responseContents.Write(_buffer, 0, bytesReceived);
-            byte[] contents = _responseContents.ToArray();
-            if (contents.Length == 0) return String.Empty;
-            return Encoding.ASCII.GetString(contents, (contents.Length > 5 ? contents.Length - 5 : 0), 5);
+
+            return Encoding.ASCII.GetString(_lastBytesTracker.LastBytes);
         }
 
         /// <summary>
@@ -292,6 +295,20 @@ namespace sidepop.Mail.Commands
         }
 
         /// <summary>
+        /// Strips the POP3 host message.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="header">The header.</param>
+        /// <returns>A <c>MemoryStream</c> without the Pop3 server message.</returns>
+        protected MemoryStream StripPop3HostMessage(byte[] bytes, string header, string footer)
+        {
+            int startPosition = header.Length + 2;
+            int length = bytes.Length - footer.Length - 2 - startPosition;
+            MemoryStream stream = new MemoryStream(bytes, startPosition, length);
+            return stream;
+        }
+
+        /// <summary>
         /// Gets the response lines.
         /// </summary>
         /// <param name="stream">The stream.</param>
@@ -299,7 +316,7 @@ namespace sidepop.Mail.Commands
         protected string[] GetResponseLines(MemoryStream stream)
         {
             List<string> lines = new List<string>();
-            using (StreamReader reader = new StreamReader(stream))
+            using (StreamReader reader = new StreamReader(stream, Encoding.GetEncoding("iso-8859-1"), false))
             {
                 try
                 {

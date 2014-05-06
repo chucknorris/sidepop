@@ -1,11 +1,11 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A4844EEA-9543-4010-991A-94D22A8BE24F}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sidepop.example.console", "product\sidepop.example.console\sidepop.example.console.csproj", "{276230E1-91BD-4A1B-AC3A-73D5F0464BD6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sidepop", "product\sidepop\sidepop.csproj", "{BDCF1507-C999-4775-90C3-4D9CB4C9F951}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A4844EEA-9543-4010-991A-94D22A8BE24F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sidepop.tests", "product\sidepop.tests\sidepop.tests.csproj", "{B2F1C365-43EE-49FF-BA8E-0338F58F1500}"
 EndProject

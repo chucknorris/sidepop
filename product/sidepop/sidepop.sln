@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sidepop", "sidepop.csproj", "{BDCF1507-C999-4775-90C3-4D9CB4C9F951}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Build|Any CPU = Build|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BDCF1507-C999-4775-90C3-4D9CB4C9F951}.Build|Any CPU.ActiveCfg = Build|Any CPU
+		{BDCF1507-C999-4775-90C3-4D9CB4C9F951}.Build|Any CPU.Build.0 = Build|Any CPU
+		{BDCF1507-C999-4775-90C3-4D9CB4C9F951}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDCF1507-C999-4775-90C3-4D9CB4C9F951}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDCF1507-C999-4775-90C3-4D9CB4C9F951}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDCF1507-C999-4775-90C3-4D9CB4C9F951}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
